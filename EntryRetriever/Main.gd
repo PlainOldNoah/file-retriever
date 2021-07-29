@@ -8,6 +8,11 @@ var inputFileFormat = "(??) * - *"
 enum INPUT_TYPES {DIRECTORY, FILE, FILES}
 var inputType
 
+var printEntry:bool = false
+var printDate:bool = true
+
+var searchKeyArray : PoolStringArray = []
+
 #---------------------------- NODES
 onready var SelectionInput = $MarginContainer/GUI/PanelContainer/VBoxContainer/HBoxContainer/SelectionInput
 
@@ -19,9 +24,12 @@ onready var StatusBarOutput = $MarginContainer/GUI/Progress/VBoxContainer/Status
 onready var OutputTextBox = $MarginContainer/GUI/OutputWindow/TextBox
 
 onready var InputFileDialog = $SingleInputFileDialog
+onready var SearchKeyInput = $MarginContainer/GUI/PanelContainer/VBoxContainer/SearchKeyInput
 
 onready var AppendButton = $MarginContainer/GUI/LowerHalf/RightSide/Export/VBoxContainer/HBoxContainer/Append
 onready var OverwriteButton = $MarginContainer/GUI/LowerHalf/RightSide/Export/VBoxContainer/HBoxContainer/Overwrite
+onready var printEntryButton = $MarginContainer/GUI/LowerHalf/LeftSide/OperationButtons/VBoxContainer/HBoxContainer2/PrintEntry
+onready var printDateButton = $MarginContainer/GUI/LowerHalf/LeftSide/OperationButtons/VBoxContainer/HBoxContainer2/PrintDate
 #============================ Functions
 
 func _ready():
@@ -76,6 +84,7 @@ func read_File(file):
 			while not line.strip_escapes().empty():
 				if find_Match(line):
 					f.seek(entryHeaderPos)
+					MatchCountOutput.text = str(int(MatchCountOutput.text) + 1)
 					line = f.get_line()
 					
 					while not line.strip_escapes().empty():
@@ -89,16 +98,24 @@ func read_File(file):
 	f.close()
 
 func find_Match(line:String) -> bool:
-	if line.matchn("*today*"):
-		MatchCountOutput.text = str(int(MatchCountOutput.text) + 1)
-		return true
-	else: return false
+	for i in searchKeyArray.size():
+		if searchKeyArray[i].to_lower() in line.to_lower():
+			return true
+	return false
 
 func print_to_output(line):
 	if find_Match(line):
 		OutputTextBox.bbcode_text += "[color=lime]" + line + "[/color]" + "\n"
 	else:
 		OutputTextBox.bbcode_text += line + "\n"
+
+func _on_Search_Keys_text_changed(_new_text):
+	format_Search_Keys()
+
+func format_Search_Keys():
+	searchKeyArray = SearchKeyInput.text.split(",", true, 0)
+	for i in searchKeyArray.size():
+		searchKeyArray[i] = searchKeyArray[i].strip_edges()
 
 #---------------------------- Buttons
 
@@ -154,3 +171,14 @@ func _on_SingleInputFileDialog_dir_selected(dir):
 func _on_SingleInputFileDialog_file_selected(path):
 	inputType = INPUT_TYPES.FILE
 	SelectionInput.text = path
+
+#Can only print entries if the date is printed as well.
+func _on_PrintDate_toggled(button_pressed):
+	printDate = button_pressed
+	if printDate == false:
+		printEntryButton.pressed = false
+
+func _on_PrintEntry_toggled(button_pressed):
+	printEntry = button_pressed
+	if printEntry == true:
+		printDateButton.pressed = true
