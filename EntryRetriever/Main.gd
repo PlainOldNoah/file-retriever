@@ -1,6 +1,6 @@
 extends PanelContainer
 
-const WindowSize = Vector2(800, 350)
+const WindowSize = Vector2(800, 360)
 
 var inputFolderFormat = "Logs - *"
 var inputFileFormat = "(??) * - *"
@@ -16,6 +16,7 @@ onready var EntryCountOutput = $MarginContainer/GUI/LowerHalf/MiddleSide/Statist
 onready var MatchCountOutput = $MarginContainer/GUI/LowerHalf/MiddleSide/Statistics/HBoxContainer/VBoxContainer2/MatchCount
 onready var ElapsedTimeOutput = $MarginContainer/GUI/LowerHalf/MiddleSide/Statistics/HBoxContainer/VBoxContainer2/ElapsedTime
 onready var StatusBarOutput = $MarginContainer/GUI/Progress/VBoxContainer/StatusBar
+onready var OutputTextBox = $MarginContainer/GUI/OutputWindow/TextBox
 
 onready var InputFileDialog = $SingleInputFileDialog
 
@@ -25,9 +26,9 @@ onready var OverwriteButton = $MarginContainer/GUI/LowerHalf/RightSide/Export/VB
 
 func _ready():
 	OS.set_window_position(OS.get_screen_size()*0.5 - OS.get_window_size()*0.5)
-	resetStatistics()
+	reset_Statistics()
 
-func resetStatistics():
+func reset_Statistics():
 	FileCountOutput.text = "0"
 	EntryCountOutput.text = "0"
 	MatchCountOutput.text = "0"
@@ -35,7 +36,7 @@ func resetStatistics():
 	StatusBarOutput.text = "Idle"
 
 #Recursively loops though directories and retrieves files
-func directoryIterate(path):
+func directory_Iterate(path):
 	var dir = Directory.new()
 	if dir.open(path) == OK:
 		dir.list_dir_begin(true, true)
@@ -44,24 +45,82 @@ func directoryIterate(path):
 			#Filters out Non-Log Folders
 			if dir.current_is_dir() and file_name.match(inputFolderFormat):
 				print("Directory: " + file_name)
-				directoryIterate(dir.get_current_dir() + "/" + file_name)
+				directory_Iterate(dir.get_current_dir() + "/" + file_name)
 			#Filters out files that don't have the right naming scheme
 			elif file_name.match(inputFileFormat):
 				print("File: " + file_name)
-				FileCountOutput.text = str(int(FileCountOutput.text) + 1)
+				read_File(dir.get_current_dir() + "/" + file_name)
 			file_name = dir.get_next()
 	else:
 		print_debug("ERROR: Bad Path Parameter: ", path)
 
+
+var entryHeaderFormat = "*/*/*, *"
+func read_File(file):
+	FileCountOutput.text = str(int(FileCountOutput.text) + 1)
+	
+	var f = File.new()
+	f.open(file, File.READ)
+	
+	var line = f.get_line()
+	var entryHeaderPos = 0
+	
+	#Read though until file
+	while not f.eof_reached():
+		#Checking for headers and marking their position
+		if line.matchn(entryHeaderFormat):
+			EntryCountOutput.text = str(int(EntryCountOutput.text) + 1)
+			entryHeaderPos = f.get_position() - line.length() - 2
+		
+			
+			while not line.strip_escapes().empty():
+				if find_Match(line):
+					f.seek(entryHeaderPos)
+					line = f.get_line()
+					
+					while not line.strip_escapes().empty():
+						print_to_output(line)
+						line = f.get_line()
+					OutputTextBox.bbcode_text += "\n"
+					
+				else: line = f.get_line()
+		
+		line = f.get_line()
+	f.close()
+
+func find_Match(line:String) -> bool:
+	if line.matchn("*today*"):
+		MatchCountOutput.text = str(int(MatchCountOutput.text) + 1)
+		return true
+	else: return false
+
+func print_to_output(line):
+	if find_Match(line):
+		OutputTextBox.bbcode_text += "[color=lime]" + line + "[/color]" + "\n"
+	else:
+		OutputTextBox.bbcode_text += line + "\n"
+
 #---------------------------- Buttons
 
 func _on_Run_pressed():
-	resetStatistics()
-	directoryIterate(SelectionInput.text)
+	reset_Statistics()
+	
+	#TODO: This should be temporary and reworked later
+	#This checks the input field to see if a directory or txt file is input
+	if SelectionInput.text.match("*.txt"):
+		inputType = INPUT_TYPES.FILE
+	else:
+		inputType = INPUT_TYPES.DIRECTORY
+	
+	match inputType:
+		INPUT_TYPES.DIRECTORY:
+			directory_Iterate(SelectionInput.text)
+		INPUT_TYPES.FILE:
+			read_File(SelectionInput.text)
 
 
 func _on_Clear_pressed():
-	resetStatistics()
+	reset_Statistics()
 
 func _on_Quit_pressed():
 	get_tree().quit()
