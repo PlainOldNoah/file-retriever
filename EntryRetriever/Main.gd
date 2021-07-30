@@ -1,9 +1,11 @@
 extends PanelContainer
 
-const WindowSize = Vector2(800, 360)
+const windowSize = Vector2(800, 360)
+const bigWindowSize = Vector2(800, 720)
 
 var inputFolderFormat = "Logs - *"
 var inputFileFormat = "(??) * - *"
+var entryHeaderFormat = "*/*/*, *"
 
 enum INPUT_TYPES {DIRECTORY, FILE, FILES}
 var inputType
@@ -15,16 +17,18 @@ var searchKeyArray : PoolStringArray = []
 
 #---------------------------- NODES
 onready var SelectionInput = $MarginContainer/GUI/PanelContainer/VBoxContainer/HBoxContainer/SelectionInput
+onready var InputFileDialog = $SingleInputFileDialog
+onready var SearchKeyInput = $MarginContainer/GUI/PanelContainer/VBoxContainer/SearchKeyInput
 
 onready var FileCountOutput = $MarginContainer/GUI/LowerHalf/MiddleSide/Statistics/HBoxContainer/VBoxContainer2/FileCount
 onready var EntryCountOutput = $MarginContainer/GUI/LowerHalf/MiddleSide/Statistics/HBoxContainer/VBoxContainer2/EntryCount
 onready var MatchCountOutput = $MarginContainer/GUI/LowerHalf/MiddleSide/Statistics/HBoxContainer/VBoxContainer2/MatchCount
 onready var ElapsedTimeOutput = $MarginContainer/GUI/LowerHalf/MiddleSide/Statistics/HBoxContainer/VBoxContainer2/ElapsedTime
-onready var StatusBarOutput = $MarginContainer/GUI/Progress/VBoxContainer/StatusBar
+onready var OutputWindow = $MarginContainer/GUI/OutputWindow
 onready var OutputTextBox = $MarginContainer/GUI/OutputWindow/TextBox
 
-onready var InputFileDialog = $SingleInputFileDialog
-onready var SearchKeyInput = $MarginContainer/GUI/PanelContainer/VBoxContainer/SearchKeyInput
+onready var StatusBarOutput = $MarginContainer/GUI/Progress/VBoxContainer/StatusBar
+onready var LoadingBar = $MarginContainer/GUI/Progress/VBoxContainer/ProgressBar
 
 onready var AppendButton = $MarginContainer/GUI/LowerHalf/RightSide/Export/VBoxContainer/HBoxContainer/Append
 onready var OverwriteButton = $MarginContainer/GUI/LowerHalf/RightSide/Export/VBoxContainer/HBoxContainer/Overwrite
@@ -42,6 +46,7 @@ func reset_Statistics():
 	MatchCountOutput.text = "0"
 	ElapsedTimeOutput.text = "0"
 	StatusBarOutput.text = "Idle"
+	OutputTextBox.bbcode_text = ""
 
 #Recursively loops though directories and retrieves files
 func directory_Iterate(path):
@@ -52,20 +57,20 @@ func directory_Iterate(path):
 		while file_name != "":
 			#Filters out Non-Log Folders
 			if dir.current_is_dir() and file_name.match(inputFolderFormat):
-				print("Directory: " + file_name)
+#				print("Directory: " + file_name)
 				directory_Iterate(dir.get_current_dir() + "/" + file_name)
 			#Filters out files that don't have the right naming scheme
 			elif file_name.match(inputFileFormat):
-				print("File: " + file_name)
+#				print("File: " + file_name)
 				read_File(dir.get_current_dir() + "/" + file_name)
 			file_name = dir.get_next()
 	else:
 		print_debug("ERROR: Bad Path Parameter: ", path)
 
 
-var entryHeaderFormat = "*/*/*, *"
 func read_File(file):
 	FileCountOutput.text = str(int(FileCountOutput.text) + 1)
+	
 	
 	var f = File.new()
 	f.open(file, File.READ)
@@ -104,18 +109,16 @@ func find_Match(line:String) -> bool:
 	return false
 
 func print_to_output(line):
-	if find_Match(line):
-		OutputTextBox.bbcode_text += "[color=lime]" + line + "[/color]" + "\n"
+	if printDate and not printEntry:
+		if line.matchn(entryHeaderFormat):
+			OutputTextBox.bbcode_text += line
+	elif printDate and printEntry:
+		if find_Match(line):
+			OutputTextBox.bbcode_text += "[color=lime]" + line + "[/color]" + "\n"
+		else:
+			OutputTextBox.bbcode_text += line + "\n"
 	else:
-		OutputTextBox.bbcode_text += line + "\n"
-
-func _on_Search_Keys_text_changed(_new_text):
-	format_Search_Keys()
-
-func format_Search_Keys():
-	searchKeyArray = SearchKeyInput.text.split(",", true, 0)
-	for i in searchKeyArray.size():
-		searchKeyArray[i] = searchKeyArray[i].strip_edges()
+		return
 
 #---------------------------- Buttons
 
@@ -129,11 +132,15 @@ func _on_Run_pressed():
 	else:
 		inputType = INPUT_TYPES.DIRECTORY
 	
+	StatusBarOutput.text = "Running"
+	var starTime = OS.get_ticks_msec()
 	match inputType:
 		INPUT_TYPES.DIRECTORY:
 			directory_Iterate(SelectionInput.text)
 		INPUT_TYPES.FILE:
 			read_File(SelectionInput.text)
+	ElapsedTimeOutput.text = str((OS.get_ticks_msec() - starTime) / 1000.0)
+	StatusBarOutput.text = "Finished"
 
 
 func _on_Clear_pressed():
@@ -143,12 +150,18 @@ func _on_Quit_pressed():
 	get_tree().quit()
 
 
+func _on_Search_Keys_text_changed(_new_text):
+	searchKeyArray = SearchKeyInput.text.split(",", true, 0)
+	for i in searchKeyArray.size():
+		searchKeyArray[i] = searchKeyArray[i].strip_edges()
+
+
 func _on_ExportBtn_pressed():
 	pass # Replace with function body.
 
 
 func _on_FileSelect_pressed():
-	InputFileDialog.popup_centered_ratio(0.8)
+	InputFileDialog.popup_centered_ratio(1.0)
 
 
 func _on_Append_pressed():
@@ -160,8 +173,14 @@ func _on_Overwrite_pressed():
 		AppendButton.pressed = false
 
 
-func _on_WindowToggleBtn_pressed():
-	pass # Replace with function body.
+func _on_WindowToggleBtn_toggled(button_pressed):
+	OutputWindow.visible = button_pressed
+	if button_pressed:
+		OS.min_window_size = bigWindowSize
+		OS.window_size.y = bigWindowSize.y
+	if not button_pressed:
+		OS.min_window_size = windowSize
+		OS.window_size.y = windowSize.y
 
 #File Input
 func _on_SingleInputFileDialog_dir_selected(dir):

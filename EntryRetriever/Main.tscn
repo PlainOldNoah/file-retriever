@@ -5,8 +5,6 @@
 [node name="PanelContainer" type="PanelContainer"]
 anchor_right = 1.0
 anchor_bottom = 1.0
-margin_right = 6.10352e-05
-margin_bottom = 224.0
 rect_min_size = Vector2( 800, 360 )
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -19,7 +17,7 @@ __meta__ = {
 margin_left = 7.0
 margin_top = 7.0
 margin_right = 793.0
-margin_bottom = 577.0
+margin_bottom = 353.0
 custom_constants/margin_right = 8
 custom_constants/margin_top = 8
 custom_constants/margin_left = 8
@@ -32,7 +30,7 @@ __meta__ = {
 margin_left = 8.0
 margin_top = 8.0
 margin_right = 778.0
-margin_bottom = 562.0
+margin_bottom = 338.0
 custom_constants/separation = 10
 __meta__ = {
 "_edit_use_anchors_": false
@@ -65,7 +63,7 @@ margin_bottom = 30.0
 rect_min_size = Vector2( 0, 30 )
 size_flags_horizontal = 3
 size_flags_vertical = 3
-text = "D:/Main_Hub/Game Dev/Projects/GitEntryRetriever/EntryRetriever/Logs - 2020/Test/(01) January - 2020.txt"
+text = "C:\\Users\\Noah\\Library\\Entires"
 clear_button_enabled = true
 placeholder_text = "Select a File or Directory to Scan Though"
 caret_blink = true
@@ -85,6 +83,7 @@ margin_top = 34.0
 margin_right = 756.0
 margin_bottom = 64.0
 rect_min_size = Vector2( 0, 30 )
+size_flags_horizontal = 3
 clear_button_enabled = true
 placeholder_text = "Enter Comma Seperated Words or Phrases to Search By"
 caret_blink = true
@@ -158,6 +157,7 @@ margin_right = 126.0
 margin_bottom = 32.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
+custom_constants/hseparation = 10
 pressed = true
 text = "Print Date"
 __meta__ = {
@@ -170,6 +170,7 @@ margin_right = 257.0
 margin_bottom = 32.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
+custom_constants/hseparation = 10
 text = "Print Entry"
 
 [node name="Run" type="Button" parent="MarginContainer/GUI/LowerHalf/LeftSide/OperationButtons/VBoxContainer"]
@@ -348,6 +349,8 @@ margin_right = 104.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
+custom_constants/hseparation = 10
+disabled = true
 pressed = true
 text = "Append"
 
@@ -357,6 +360,8 @@ margin_right = 213.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
+custom_constants/hseparation = 10
+disabled = true
 text = "Overwrite"
 
 [node name="ExportBtn" type="Button" parent="MarginContainer/GUI/LowerHalf/RightSide/Export/VBoxContainer"]
@@ -376,28 +381,28 @@ margin_bottom = 120.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="WindowToggleBtn" type="Button" parent="MarginContainer/GUI/LowerHalf/RightSide/WindowToggle"]
+[node name="WindowToggleBtn" type="CheckBox" parent="MarginContainer/GUI/LowerHalf/RightSide/WindowToggle"]
 margin_left = 7.0
 margin_top = 7.0
 margin_right = 220.0
 margin_bottom = 37.0
 rect_min_size = Vector2( 0, 30 )
+custom_constants/hseparation = 10
 text = "Toggle Output Screen"
 
 [node name="OutputWindow" type="PanelContainer" parent="MarginContainer/GUI"]
+visible = false
 margin_top = 335.0
 margin_right = 770.0
-margin_bottom = 554.0
+margin_bottom = 360.0
 size_flags_vertical = 3
 
 [node name="TextBox" type="RichTextLabel" parent="MarginContainer/GUI/OutputWindow"]
 margin_left = 7.0
 margin_top = 7.0
 margin_right = 763.0
-margin_bottom = 212.0
+margin_bottom = 18.0
 focus_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
 custom_constants/line_separation = 1
 bbcode_enabled = true
 selection_enabled = true
@@ -406,7 +411,7 @@ selection_enabled = true
 margin_left = 7.0
 margin_top = 7.0
 margin_right = 793.0
-margin_bottom = 343.0
+margin_bottom = 353.0
 rect_min_size = Vector2( 400, 140 )
 rect_clip_content = true
 size_flags_horizontal = 3
@@ -428,6 +433,6 @@ current_path = "/Main_Hub/Game Dev/Projects/GitEntryRetriever/EntryRetriever/"
 [connection signal="pressed" from="MarginContainer/GUI/LowerHalf/RightSide/Export/VBoxContainer/HBoxContainer/Append" to="." method="_on_Append_pressed"]
 [connection signal="pressed" from="MarginContainer/GUI/LowerHalf/RightSide/Export/VBoxContainer/HBoxContainer/Overwrite" to="." method="_on_Overwrite_pressed"]
 [connection signal="pressed" from="MarginContainer/GUI/LowerHalf/RightSide/Export/VBoxContainer/ExportBtn" to="." method="_on_ExportBtn_pressed"]
-[connection signal="pressed" from="MarginContainer/GUI/LowerHalf/RightSide/WindowToggle/WindowToggleBtn" to="." method="_on_WindowToggleBtn_pressed"]
+[connection signal="toggled" from="MarginContainer/GUI/LowerHalf/RightSide/WindowToggle/WindowToggleBtn" to="." method="_on_WindowToggleBtn_toggled"]
 [connection signal="dir_selected" from="SingleInputFileDialog" to="." method="_on_SingleInputFileDialog_dir_selected"]
 [connection signal="file_selected" from="SingleInputFileDialog" to="." method="_on_SingleInputFileDialog_file_selected"]
