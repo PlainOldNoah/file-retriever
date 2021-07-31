@@ -15,10 +15,12 @@ var printDate:bool = true
 
 var searchKeyArray : PoolStringArray = []
 
+var rng = RandomNumberGenerator.new()
+
 #---------------------------- NODES
 onready var SelectionInput = $MarginContainer/GUI/PanelContainer/VBoxContainer/HBoxContainer/SelectionInput
 onready var InputFileDialog = $SingleInputFileDialog
-onready var SearchKeyInput = $MarginContainer/GUI/PanelContainer/VBoxContainer/SearchKeyInput
+onready var SearchKeyInput = $MarginContainer/GUI/PanelContainer/VBoxContainer/HBoxContainer2/SearchKeyInput
 
 onready var FileCountOutput = $MarginContainer/GUI/LowerHalf/MiddleSide/Statistics/HBoxContainer/VBoxContainer2/FileCount
 onready var EntryCountOutput = $MarginContainer/GUI/LowerHalf/MiddleSide/Statistics/HBoxContainer/VBoxContainer2/EntryCount
@@ -39,6 +41,7 @@ onready var printDateButton = $MarginContainer/GUI/LowerHalf/LeftSide/OperationB
 func _ready():
 	OS.set_window_position(OS.get_screen_size()*0.5 - OS.get_window_size()*0.5)
 	reset_Statistics()
+	rng.randomize()
 
 func reset_Statistics():
 	FileCountOutput.text = "0"
@@ -47,6 +50,8 @@ func reset_Statistics():
 	ElapsedTimeOutput.text = "0"
 	StatusBarOutput.text = "Idle"
 	OutputTextBox.bbcode_text = ""
+	LoadingBar.value = 0
+
 
 #Recursively loops though directories and retrieves files
 func directory_Iterate(path):
@@ -71,6 +76,8 @@ func directory_Iterate(path):
 func read_File(file):
 	FileCountOutput.text = str(int(FileCountOutput.text) + 1)
 	
+	#TODO
+#	LoadingBar.value = ((int(FileCountOutput.text) / 55) * 100)
 	
 	var f = File.new()
 	f.open(file, File.READ)
@@ -102,11 +109,13 @@ func read_File(file):
 		line = f.get_line()
 	f.close()
 
+
 func find_Match(line:String) -> bool:
 	for i in searchKeyArray.size():
 		if searchKeyArray[i].to_lower() in line.to_lower():
 			return true
 	return false
+
 
 func print_to_output(line):
 	if printDate and not printEntry:
@@ -120,11 +129,41 @@ func print_to_output(line):
 	else:
 		return
 
+
+func generate_rand_date() -> String:
+	var date = OS.get_date()
+	var year = rng.randi_range(2017, date.year)
+	var month = 01
+	var day = 1
+	
+	if year != date.year:
+		month = rng.randi_range(1, 12)
+	else:
+		month = rng.randi_range(1, date.month)
+	
+	var maxDay = 31
+	if year == date.year and month == date.month:
+		maxDay = date.day
+	elif month == 2:
+		if year % 4 == 0:
+			maxDay = 29
+		else:
+			maxDay = 28
+	elif month == 4 or month == 6 or month == 9 or month == 11:
+		maxDay = 30
+	day = rng.randi_range(1, maxDay)
+	
+	year = str(year)
+	year.erase(0, 2)
+	
+	var output = str(month) + "/" + str(day) + "/" + year
+	return output
+
 #---------------------------- Buttons
 
 func _on_Run_pressed():
 	reset_Statistics()
-	
+	parse_Search_Keys()
 	#TODO: This should be temporary and reworked later
 	#This checks the input field to see if a directory or txt file is input
 	if SelectionInput.text.match("*.txt"):
@@ -134,6 +173,7 @@ func _on_Run_pressed():
 	
 	StatusBarOutput.text = "Running"
 	var starTime = OS.get_ticks_msec()
+	
 	match inputType:
 		INPUT_TYPES.DIRECTORY:
 			directory_Iterate(SelectionInput.text)
@@ -151,10 +191,12 @@ func _on_Quit_pressed():
 
 
 func _on_Search_Keys_text_changed(_new_text):
+	parse_Search_Keys()
+
+func parse_Search_Keys():
 	searchKeyArray = SearchKeyInput.text.split(",", true, 0)
 	for i in searchKeyArray.size():
 		searchKeyArray[i] = searchKeyArray[i].strip_edges()
-
 
 func _on_ExportBtn_pressed():
 	pass # Replace with function body.
@@ -162,7 +204,8 @@ func _on_ExportBtn_pressed():
 
 func _on_FileSelect_pressed():
 	InputFileDialog.popup_centered_ratio(1.0)
-
+	InputFileDialog.current_path = SelectionInput.text
+	InputFileDialog.current_dir = SelectionInput.text
 
 func _on_Append_pressed():
 	if AppendButton.pressed == true:
@@ -201,3 +244,7 @@ func _on_PrintEntry_toggled(button_pressed):
 	printEntry = button_pressed
 	if printEntry == true:
 		printDateButton.pressed = true
+
+
+func _on_RandomDate_pressed():
+	SearchKeyInput.text = generate_rand_date()
