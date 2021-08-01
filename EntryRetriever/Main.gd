@@ -22,6 +22,9 @@ onready var SelectionInput = $MarginContainer/GUI/PanelContainer/VBoxContainer/H
 onready var InputFileDialog = $SingleInputFileDialog
 onready var SearchKeyInput = $MarginContainer/GUI/PanelContainer/VBoxContainer/HBoxContainer2/SearchKeyInput
 
+onready var OutputFileConfirm = $OutputFileConfirmation
+onready var OutputFileName = $OutputFileConfirmation/LineEdit
+
 onready var FileCountOutput = $MarginContainer/GUI/LowerHalf/MiddleSide/Statistics/HBoxContainer/VBoxContainer2/FileCount
 onready var EntryCountOutput = $MarginContainer/GUI/LowerHalf/MiddleSide/Statistics/HBoxContainer/VBoxContainer2/EntryCount
 onready var MatchCountOutput = $MarginContainer/GUI/LowerHalf/MiddleSide/Statistics/HBoxContainer/VBoxContainer2/MatchCount
@@ -36,6 +39,7 @@ onready var AppendButton = $MarginContainer/GUI/LowerHalf/RightSide/Export/VBoxC
 onready var OverwriteButton = $MarginContainer/GUI/LowerHalf/RightSide/Export/VBoxContainer/HBoxContainer/Overwrite
 onready var printEntryButton = $MarginContainer/GUI/LowerHalf/LeftSide/OperationButtons/VBoxContainer/HBoxContainer2/PrintEntry
 onready var printDateButton = $MarginContainer/GUI/LowerHalf/LeftSide/OperationButtons/VBoxContainer/HBoxContainer2/PrintDate
+
 #============================ Functions
 
 func _ready():
@@ -159,11 +163,19 @@ func generate_rand_date() -> String:
 	var output = str(month) + "/" + str(day) + "/" + year
 	return output
 
-#---------------------------- Buttons
+
+func parse_Search_Keys():
+	searchKeyArray = SearchKeyInput.text.split(",", true, 0)
+	for i in searchKeyArray.size():
+		searchKeyArray[i] = searchKeyArray[i].strip_edges()
+
+#============================ Buttons and Signals
 
 func _on_Run_pressed():
 	reset_Statistics()
 	parse_Search_Keys()
+	
+	print("STARTING...")
 	
 	StatusBarOutput.text = "Running"
 	yield(get_tree().create_timer(0.02), "timeout")
@@ -203,42 +215,6 @@ func _on_Quit_pressed():
 
 func _on_Search_Keys_text_changed(_new_text):
 	parse_Search_Keys()
-
-
-func parse_Search_Keys():
-	searchKeyArray = SearchKeyInput.text.split(",", true, 0)
-	for i in searchKeyArray.size():
-		searchKeyArray[i] = searchKeyArray[i].strip_edges()
-
-
-func _on_ExportBtn_pressed():
-	var outputFileName:String = "newFile"
-	
-	if searchKeyArray.size() > 0:
-		outputFileName = str(searchKeyArray[0])
-	outputFileName = outputFileName\
-	.replace("/", "_").replace("\\", "_").replace(":", "_")\
-	.replace("*", "_").replace("?", "_").replace("\"", "_")\
-	.replace("<", "_").replace(">", "_").replace("|", "_")\
-	
-	print(outputFileName)
-	
-	var outputFilePath = "user://" + outputFileName + ".txt"
-	
-	var file2Check = File.new()
-	var doFileExist = file2Check.file_exists(outputFilePath)
-	
-	
-	var file = File.new()
-	var fileStatus = 3
-	if AppendButton.pressed == false or not doFileExist:
-		fileStatus = 2
-
-	file.open(outputFilePath, fileStatus)
-	StatusBarOutput.text = "File Saved: " + OS.get_user_data_dir()
-	file.store_string(OutputTextBox.bbcode_text)
-	file2Check.close()
-	file.close()
 
 
 func _on_FileSelect_pressed():
@@ -288,6 +264,35 @@ func _on_RandomDate_pressed():
 	SearchKeyInput.text += generate_rand_date()
 	parse_Search_Keys()
 
+#Exporting Text to File
+func _on_ExportBtn_pressed():
+	OutputFileConfirm.popup()
 
-func _on_TEMP_pressed():
-	$ConfirmationDialog.popup_centered()
+
+func _on_OutputFileConfirmation_confirmed():
+
+	var outputFileName:String = OutputFileName.text
+
+	outputFileName = outputFileName\
+	.replace("/", "_").replace("\\", "_").replace(":", "_")\
+	.replace("*", "_").replace("?", "_").replace("\"", "_")\
+	.replace("<", "_").replace(">", "_").replace("|", "_")\
+	
+	if outputFileName.empty():
+		outputFileName = "newFile"
+	
+	var outputFilePath = "user://" + outputFileName + ".txt"
+
+	var file2Check = File.new()
+	var doFileExist = file2Check.file_exists(outputFilePath)
+	
+	var file = File.new()
+	var fileStatus = 3
+	if AppendButton.pressed == false or not doFileExist:
+		fileStatus = 2
+
+	file.open(outputFilePath, fileStatus)
+	StatusBarOutput.text = "File Saved: " + OS.get_user_data_dir()
+	file.store_string(OutputTextBox.bbcode_text)
+	file2Check.close()
+	file.close()
