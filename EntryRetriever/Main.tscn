@@ -423,11 +423,12 @@ selection_enabled = true
 margin_left = 7.0
 margin_top = 7.0
 margin_right = 793.0
-margin_bottom = 353.0
+margin_bottom = 313.0
 rect_min_size = Vector2( 400, 140 )
 rect_clip_content = true
 size_flags_horizontal = 3
 size_flags_vertical = 3
+popup_exclusive = true
 resizable = true
 mode_overrides_title = false
 mode = 3
@@ -435,6 +436,31 @@ access = 2
 filters = PoolStringArray( "*.txt ; Text Files" )
 current_dir = "/Main_Hub/Game Dev/Projects/GitEntryRetriever/EntryRetriever"
 current_path = "/Main_Hub/Game Dev/Projects/GitEntryRetriever/EntryRetriever/"
+
+[node name="OutputFileConfirmation" type="ConfirmationDialog" parent="."]
+visible = true
+margin_left = 300.0
+margin_top = 125.0
+margin_right = 500.0
+margin_bottom = 195.0
+rect_clip_content = true
+size_flags_horizontal = 4
+size_flags_vertical = 4
+popup_exclusive = true
+window_title = ""
+
+[node name="LineEdit" type="LineEdit" parent="OutputFileConfirmation"]
+anchor_left = 0.04
+anchor_top = 0.114286
+anchor_right = 0.96
+anchor_bottom = 0.485714
+size_flags_horizontal = 4
+size_flags_vertical = 4
+align = 1
+placeholder_text = "Enter Output Filename"
+__meta__ = {
+"_edit_use_anchors_": true
+}
 [connection signal="pressed" from="MarginContainer/GUI/PanelContainer/VBoxContainer/HBoxContainer/FileSelect" to="." method="_on_FileSelect_pressed"]
 [connection signal="text_changed" from="MarginContainer/GUI/PanelContainer/VBoxContainer/HBoxContainer2/SearchKeyInput" to="." method="_on_Search_Keys_text_changed"]
 [connection signal="pressed" from="MarginContainer/GUI/PanelContainer/VBoxContainer/HBoxContainer2/RandomDate" to="." method="_on_RandomDate_pressed"]

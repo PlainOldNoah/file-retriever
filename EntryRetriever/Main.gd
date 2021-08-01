@@ -81,30 +81,32 @@ func read_File(file):
 	
 	var line = f.get_line()
 	var entryHeaderPos = 0
+	var newHeaderPos = -1
 	
 	#Read though until file
 	while not f.eof_reached():
+		
 		#Checking for headers and marking their position
 		if line.matchn(entryHeaderFormat):
+			entryHeaderPos = max(f.get_position() - line.length() - 2, newHeaderPos)
 			EntryCountOutput.text = str(int(EntryCountOutput.text) + 1)
-			entryHeaderPos = f.get_position() - line.length() - 2
 		
+		if find_Match(line):
+			MatchCountOutput.text = str(int(MatchCountOutput.text) + 1)
+			f.seek(entryHeaderPos)
+			line = f.get_line()
+			print_to_output(line)
+			line = f.get_line()
 			
-			while not line.strip_escapes().empty():
-				if find_Match(line):
-					f.seek(entryHeaderPos)
-					MatchCountOutput.text = str(int(MatchCountOutput.text) + 1)
-					line = f.get_line()
-					
-					while not line.strip_escapes().empty():
-						
-						print_to_output(line)
-						line = f.get_line()
-					OutputTextBox.bbcode_text += "\n"
-					
-				else: line = f.get_line()
-		
-		line = f.get_line()
+			while not f.eof_reached():
+				if line.matchn(entryHeaderFormat):
+					newHeaderPos = f.get_position() - line.length() - 2
+					break
+				print_to_output(line)
+				line = f.get_line()
+				
+		else:
+			line = f.get_line()
 	f.close()
 
 
@@ -118,7 +120,7 @@ func find_Match(line:String) -> bool:
 func print_to_output(line):
 	if printDate and not printEntry:
 		if line.matchn(entryHeaderFormat):
-			OutputTextBox.bbcode_text += line
+			OutputTextBox.bbcode_text += line + "\n"
 	elif printDate and printEntry:
 		if find_Match(line):
 			OutputTextBox.bbcode_text += "[color=lime]" + line + "[/color]" + "\n"
@@ -166,12 +168,13 @@ func _on_Run_pressed():
 	StatusBarOutput.text = "Running"
 	yield(get_tree().create_timer(0.02), "timeout")
 	
-#	#TODO: This should be temporary and reworked later
+	
 #	#This checks the input field to see if a directory or txt file is input
 	if SelectionInput.text.match("*.txt"):
 		inputType = INPUT_TYPES.FILE
 	else:
 		inputType = INPUT_TYPES.DIRECTORY
+	
 	
 	var startTime = OS.get_ticks_msec()
 	
@@ -182,7 +185,12 @@ func _on_Run_pressed():
 			read_File(SelectionInput.text)
 	
 	ElapsedTimeOutput.text = str((OS.get_ticks_msec() - startTime) / 1000.0)
-	StatusBarOutput.text = "Finished"
+	
+	if FileCountOutput.text == "0":
+		reset_Statistics()
+		StatusBarOutput.text = "ERROR: Bad File Path"
+	else:
+		StatusBarOutput.text = "Finished"
 
 
 func _on_Clear_pressed():
@@ -279,3 +287,7 @@ func _on_RandomDate_pressed():
 		SearchKeyInput.text += ", "
 	SearchKeyInput.text += generate_rand_date()
 	parse_Search_Keys()
+
+
+func _on_TEMP_pressed():
+	$ConfirmationDialog.popup_centered()
