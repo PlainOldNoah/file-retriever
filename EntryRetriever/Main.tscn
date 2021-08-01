@@ -1,11 +1,13 @@
-[gd_scene load_steps=2 format=2]
+[gd_scene load_steps=3 format=2]
 
 [ext_resource path="res://Main.gd" type="Script" id=1]
+
+[sub_resource type="ButtonGroup" id=1]
 
 [node name="PanelContainer" type="PanelContainer"]
 anchor_right = 1.0
 anchor_bottom = 1.0
-rect_min_size = Vector2( 800, 360 )
+rect_min_size = Vector2( 800, 320 )
 size_flags_horizontal = 3
 size_flags_vertical = 3
 script = ExtResource( 1 )
@@ -17,7 +19,7 @@ __meta__ = {
 margin_left = 7.0
 margin_top = 7.0
 margin_right = 793.0
-margin_bottom = 353.0
+margin_bottom = 313.0
 custom_constants/margin_right = 8
 custom_constants/margin_top = 8
 custom_constants/margin_left = 8
@@ -30,7 +32,7 @@ __meta__ = {
 margin_left = 8.0
 margin_top = 8.0
 margin_right = 778.0
-margin_bottom = 338.0
+margin_bottom = 298.0
 custom_constants/separation = 10
 __meta__ = {
 "_edit_use_anchors_": false
@@ -102,7 +104,7 @@ text = "Random Date"
 [node name="Progress" type="PanelContainer" parent="MarginContainer/GUI"]
 margin_top = 112.0
 margin_right = 770.0
-margin_bottom = 195.0
+margin_bottom = 156.0
 size_flags_horizontal = 3
 size_flags_stretch_ratio = 0.5
 
@@ -110,9 +112,10 @@ size_flags_stretch_ratio = 0.5
 margin_left = 7.0
 margin_top = 7.0
 margin_right = 763.0
-margin_bottom = 76.0
+margin_bottom = 37.0
 
 [node name="ProgressBar" type="ProgressBar" parent="MarginContainer/GUI/Progress/VBoxContainer"]
+visible = false
 margin_right = 756.0
 margin_bottom = 35.0
 rect_min_size = Vector2( 0, 35 )
@@ -120,9 +123,8 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 
 [node name="StatusBar" type="LineEdit" parent="MarginContainer/GUI/Progress/VBoxContainer"]
-margin_top = 39.0
 margin_right = 756.0
-margin_bottom = 69.0
+margin_bottom = 30.0
 rect_min_size = Vector2( 0, 30 )
 size_flags_horizontal = 3
 size_flags_vertical = 0
@@ -131,9 +133,9 @@ editable = false
 placeholder_text = "Status"
 
 [node name="LowerHalf" type="HBoxContainer" parent="MarginContainer/GUI"]
-margin_top = 205.0
+margin_top = 166.0
 margin_right = 770.0
-margin_bottom = 325.0
+margin_bottom = 286.0
 
 [node name="LeftSide" type="VBoxContainer" parent="MarginContainer/GUI/LowerHalf"]
 margin_right = 271.0
@@ -181,6 +183,7 @@ margin_bottom = 32.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 custom_constants/hseparation = 10
+pressed = true
 text = "Print Entry"
 
 [node name="Run" type="Button" parent="MarginContainer/GUI/LowerHalf/LeftSide/OperationButtons/VBoxContainer"]
@@ -360,8 +363,8 @@ margin_bottom = 24.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 custom_constants/hseparation = 10
-disabled = true
 pressed = true
+group = SubResource( 1 )
 text = "Append"
 
 [node name="Overwrite" type="CheckBox" parent="MarginContainer/GUI/LowerHalf/RightSide/Export/VBoxContainer/HBoxContainer"]
@@ -371,7 +374,7 @@ margin_bottom = 24.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 custom_constants/hseparation = 10
-disabled = true
+group = SubResource( 1 )
 text = "Overwrite"
 
 [node name="ExportBtn" type="Button" parent="MarginContainer/GUI/LowerHalf/RightSide/Export/VBoxContainer"]
@@ -381,7 +384,6 @@ margin_bottom = 58.0
 rect_min_size = Vector2( 0, 30 )
 size_flags_horizontal = 3
 size_flags_vertical = 3
-disabled = true
 text = "Export to Output File"
 
 [node name="WindowToggle" type="PanelContainer" parent="MarginContainer/GUI/LowerHalf/RightSide"]
@@ -441,8 +443,6 @@ current_path = "/Main_Hub/Game Dev/Projects/GitEntryRetriever/EntryRetriever/"
 [connection signal="pressed" from="MarginContainer/GUI/LowerHalf/LeftSide/OperationButtons/VBoxContainer/Run" to="." method="_on_Run_pressed"]
 [connection signal="pressed" from="MarginContainer/GUI/LowerHalf/LeftSide/OperationButtons/VBoxContainer/HBoxContainer/Clear" to="." method="_on_Clear_pressed"]
 [connection signal="pressed" from="MarginContainer/GUI/LowerHalf/LeftSide/OperationButtons/VBoxContainer/HBoxContainer/Quit" to="." method="_on_Quit_pressed"]
-[connection signal="pressed" from="MarginContainer/GUI/LowerHalf/RightSide/Export/VBoxContainer/HBoxContainer/Append" to="." method="_on_Append_pressed"]
-[connection signal="pressed" from="MarginContainer/GUI/LowerHalf/RightSide/Export/VBoxContainer/HBoxContainer/Overwrite" to="." method="_on_Overwrite_pressed"]
 [connection signal="pressed" from="MarginContainer/GUI/LowerHalf/RightSide/Export/VBoxContainer/ExportBtn" to="." method="_on_ExportBtn_pressed"]
 [connection signal="toggled" from="MarginContainer/GUI/LowerHalf/RightSide/WindowToggle/WindowToggleBtn" to="." method="_on_WindowToggleBtn_toggled"]
 [connection signal="dir_selected" from="SingleInputFileDialog" to="." method="_on_SingleInputFileDialog_dir_selected"]
