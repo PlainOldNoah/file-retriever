@@ -22,8 +22,12 @@ config/windows_native_icon="res://EntryRetrieverIcon.ico"
 
 [display]
 
-window/size/width=800
+window/size/width=700
 window/size/height=320
+
+[filesystem]
+
+import/size/width=800
 
 [rendering]
 

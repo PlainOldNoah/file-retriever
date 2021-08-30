@@ -1,11 +1,11 @@
 extends PanelContainer
 
-const windowSize = Vector2(800, 320)
-const bigWindowSize = Vector2(800, 720)
+const windowSize = Vector2(700, 320)
+const bigWindowSize = Vector2(700, 720)
 
 var inputFolderFormat = "Logs - *"
 var inputFileFormat = "(??) * - *"
-var entryHeaderFormat = "*/*/*, *"
+var entryHeaderFormat = "*/*/*, *day"
 
 enum INPUT_TYPES {DIRECTORY, FILE, FILES}
 var inputType
@@ -47,6 +47,10 @@ func _ready():
 	reset_Statistics()
 	rng.randomize()
 
+func _unhandled_input(event):
+	#Removes focus from any other control node to allow ui_accept to press the 'run' button
+	if event.is_action_pressed("ui_accept") and get_focus_owner() != null:
+		get_focus_owner().release_focus()
 
 func reset_Statistics():
 	FileCountOutput.text = "0"
@@ -259,7 +263,7 @@ func _on_PrintEntry_toggled(button_pressed):
 
 
 func _on_RandomDate_pressed():
-	if not searchKeyArray.empty():
+	if not SearchKeyInput.text.empty():
 		SearchKeyInput.text += ", "
 	SearchKeyInput.text += generate_rand_date()
 	parse_Search_Keys()
