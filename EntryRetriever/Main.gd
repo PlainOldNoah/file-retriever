@@ -14,6 +14,9 @@ var printEntry:bool = true
 var printDate:bool = true
 
 var searchKeyArray : PoolStringArray = []
+var excludedKeyArray: PoolStringArray = []
+var combinedKeyArray: PoolStringArray = []
+var defaultKeyArray: PoolStringArray = []
 
 var rng = RandomNumberGenerator.new()
 
@@ -76,46 +79,53 @@ func directory_Iterate(path):
 			elif file_name.match(inputFileFormat):
 				read_File(dir.get_current_dir() + "/" + file_name)
 			file_name = dir.get_next()
-			
 	else:
 		print_debug("ERROR: Bad Path Parameter: ", path)
-
 
 func read_File(file):
 	FileCountOutput.text = str(int(FileCountOutput.text) + 1)
 	
-	var f = File.new()
-	f.open(file, File.READ)
+	var f:File = File.new()
+	var _err = f.open(file, File.READ)
 	
-	var line = f.get_line()
-	var entryHeaderPos = 0
-	var newHeaderPos = -1
+	var line:String
+	var currentHeaderPos:int = -1
+#	var currentEntry:String
+	var nextHeaderPos:int = -1
 	
-	#Read though until file
+	#Scan for the first header in the file
 	while not f.eof_reached():
-		
-		#Checking for headers and marking their position
+		line = f.get_line()
 		if line.matchn(entryHeaderFormat):
-			entryHeaderPos = max(f.get_position() - line.length() - 2, newHeaderPos)
-			EntryCountOutput.text = str(int(EntryCountOutput.text) + 1)
-		
-		if find_Match(line):
-			MatchCountOutput.text = str(int(MatchCountOutput.text) + 1)
-			f.seek(entryHeaderPos)
-			line = f.get_line()
-			print_to_output(line)
-			line = f.get_line()
-			
-			while not f.eof_reached():
-				if line.matchn(entryHeaderFormat):
-					newHeaderPos = f.get_position() - line.length() - 2
-					break
-				print_to_output(line)
-				line = f.get_line()
-				
-		else:
-			line = f.get_line()
+			currentHeaderPos = f.get_position() - line.length() - 2
+			break
+#	print_debug(currentHeaderPos, ": ", f.get_path())
+	
+	#If the file doesn't have any headers or is formated wrong escape
+	if currentHeaderPos == -1:
+		print_debug("ERROR: Bad File Format: ", f.get_path())
+		f.close()
+		return
+	
+	#After getting header position run though each entry
+	while not f.eof_reached():
+		nextHeaderPos = scan_Entry(f, currentHeaderPos)
+		currentHeaderPos = nextHeaderPos
+	
 	f.close()
+
+func scan_Entry(f:File, currentHeaderPos:int) -> int:
+	f.seek(currentHeaderPos)
+	var line:String = f.get_line()
+	
+	while not f.eof_reached():
+		#Return the cursors position is the next header is found
+		if line.matchn(entryHeaderFormat):
+#			print_debug(line)
+			EntryCountOutput.text = str(int(EntryCountOutput.text) + 1)
+			return f.get_position()
+		line = f.get_line()
+	return -1
 
 
 func find_Match(line:String) -> bool:
@@ -168,16 +178,46 @@ func generate_rand_date() -> String:
 	return output
 
 
+#Converts the user input to a poolStringArray
 func parse_Search_Keys():
-	searchKeyArray = SearchKeyInput.text.split(",", true, 0)
+	searchKeyArray = SearchKeyInput.text.split(",", false, 0)
 	for i in searchKeyArray.size():
 		searchKeyArray[i] = searchKeyArray[i].strip_edges()
 
+
+#Splits apart searchKeyArray into sub-arrays for later use in matching
+func split_Search_Arrays():
+	#Reset the arrays for appending
+	excludedKeyArray.resize(0)
+	combinedKeyArray.resize(0)
+	defaultKeyArray.resize(0)
+	
+	#Seperate elements from main array into exclude, combine, and defaul
+	for i in searchKeyArray.size():
+		if searchKeyArray[i].match("-*"):
+			excludedKeyArray.append(searchKeyArray[i])
+		elif searchKeyArray[i].match("+*"):
+			combinedKeyArray.append(searchKeyArray[i])
+		else:
+			defaultKeyArray.append(searchKeyArray[i])
+	
+	#Clean up sub-arrays
+	for i in excludedKeyArray.size():
+		excludedKeyArray[i] = excludedKeyArray[i].replace("-", "")
+	for i in combinedKeyArray.size():
+		combinedKeyArray[i] = combinedKeyArray[i].replace("+", "")
+	
+#	print_debug("DF: ", defaultKeyArray.size(), ": ", defaultKeyArray)
+#	print_debug("CO: ", combinedKeyArray.size(), ": ", combinedKeyArray)
+#	print_debug("EX: ", excludedKeyArray.size(), ": ", excludedKeyArray)
+	
 #============================ Buttons and Signals
 
 func _on_Run_pressed():
+	#Initializing
 	reset_Statistics()
 	parse_Search_Keys()
+	split_Search_Arrays()
 	
 	print("STARTING...")
 	
