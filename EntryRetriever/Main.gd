@@ -98,6 +98,7 @@ func read_File(file):
 		line = f.get_line()
 		if line.matchn(entryHeaderFormat):
 			currentHeaderPos = f.get_position() - line.length() - 2
+			EntryCountOutput.text = str(int(EntryCountOutput.text) + 1) #For the first header
 			break
 #	print_debug(currentHeaderPos, ": ", f.get_path())
 	
@@ -109,25 +110,50 @@ func read_File(file):
 	
 	#After getting header position run though each entry
 	while not f.eof_reached():
-		nextHeaderPos = scan_Entry(f, currentHeaderPos)
+		nextHeaderPos = get_Next_Header(f, currentHeaderPos)
+		search_Entry(f, currentHeaderPos, nextHeaderPos)
 		currentHeaderPos = nextHeaderPos
 	
 	f.close()
 
-func scan_Entry(f:File, currentHeaderPos:int) -> int:
+
+#Takes in a file and the current header and then iterates though the lines until the next header is found
+#Returns the next headers start position
+func get_Next_Header(f:File, currentHeaderPos:int) -> int:
 	f.seek(currentHeaderPos)
 	var line:String = f.get_line()
+	var currentHeaderText:String = line
 	
 	while not f.eof_reached():
 		#Return the cursors position is the next header is found
-		if line.matchn(entryHeaderFormat):
-#			print_debug(line)
-			EntryCountOutput.text = str(int(EntryCountOutput.text) + 1)
-			return f.get_position()
+		if line.matchn(entryHeaderFormat) and not line.match(currentHeaderText):
+			EntryCountOutput.text = str(int(EntryCountOutput.text) + 1) #For all other headers
+			return f.get_position() - line.length() - 2
 		line = f.get_line()
-	return -1
+	
+	f.seek_end(0)
+	return f.get_position()
 
 
+#Scans though an entry while applying each search key array
+func search_Entry(f:File, currentHeaderPos:int, nextHeaderPos:int) -> bool:
+	f.seek(currentHeaderPos)
+	var line:String = f.get_line()
+	
+	#TODO: Implement search key arrays here
+	
+	while f.get_position() < nextHeaderPos:
+		if line.matchn(entryHeaderFormat): #DEBUG: THIS LOOP IS USED FOR DEBUGGING ONLY
+			print(line)
+			pass
+		line = f.get_line()
+	
+#	print_debug(currentHeaderPos, " | ",nextHeaderPos, " | ", nextHeaderPos == f.get_position())
+
+	return false
+
+
+#VERIFY: OUTDATED
 func find_Match(line:String) -> bool:
 	for i in searchKeyArray.size():
 		if searchKeyArray[i].to_lower() in line.to_lower():
@@ -206,11 +232,11 @@ func split_Search_Arrays():
 		excludedKeyArray[i] = excludedKeyArray[i].replace("-", "")
 	for i in combinedKeyArray.size():
 		combinedKeyArray[i] = combinedKeyArray[i].replace("+", "")
-	
+		
 #	print_debug("DF: ", defaultKeyArray.size(), ": ", defaultKeyArray)
 #	print_debug("CO: ", combinedKeyArray.size(), ": ", combinedKeyArray)
 #	print_debug("EX: ", excludedKeyArray.size(), ": ", excludedKeyArray)
-	
+
 #============================ Buttons and Signals
 
 func _on_Run_pressed():
