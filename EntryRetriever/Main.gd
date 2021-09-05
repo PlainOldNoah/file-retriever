@@ -13,10 +13,8 @@ var inputType
 var printEntry:bool = true
 var printDate:bool = true
 
-var searchKeyArray : PoolStringArray = []
-var excludedKeyArray: PoolStringArray = []
-var combinedKeyArray: PoolStringArray = []
-var defaultKeyArray: PoolStringArray = []
+var searchKeyArray : PoolStringArray = [] #Holds the comma seperated search terms
+var operationArray : PoolStringArray = [] #Stores the operation of each search term
 
 var rng = RandomNumberGenerator.new()
 
@@ -47,7 +45,7 @@ onready var printDateButton = $MarginContainer/GUI/LowerHalf/LeftSide/OperationB
 
 func _ready():
 	OS.set_window_position(OS.get_screen_size()*0.5 - OS.get_window_size()*0.5)
-	reset_Statistics()
+	reset_statistics()
 	rng.randomize()
 
 func _unhandled_input(event):
@@ -55,7 +53,7 @@ func _unhandled_input(event):
 	if event.is_action_pressed("ui_accept") and get_focus_owner() != null:
 		get_focus_owner().release_focus()
 
-func reset_Statistics():
+func reset_statistics():
 	FileCountOutput.text = "0"
 	EntryCountOutput.text = "0"
 	MatchCountOutput.text = "0"
@@ -66,7 +64,7 @@ func reset_Statistics():
 
 
 #Recursively loops though directories and retrieves files
-func directory_Iterate(path):
+func directory_iterate(path):
 	var dir = Directory.new()
 	if dir.open(path) == OK:
 		dir.list_dir_begin(true, true)
@@ -74,15 +72,15 @@ func directory_Iterate(path):
 		while file_name != "":
 			#Filters out Non-Log Folders
 			if dir.current_is_dir() and file_name.match(inputFolderFormat):
-				directory_Iterate(dir.get_current_dir() + "/" + file_name)
+				directory_iterate(dir.get_current_dir() + "/" + file_name)
 			#Filters out files that don't have the right naming scheme
 			elif file_name.match(inputFileFormat):
-				read_File(dir.get_current_dir() + "/" + file_name)
+				read_file(dir.get_current_dir() + "/" + file_name)
 			file_name = dir.get_next()
 	else:
 		print_debug("ERROR: Bad Path Parameter: ", path)
 
-func read_File(file):
+func read_file(file):
 	FileCountOutput.text = str(int(FileCountOutput.text) + 1)
 	
 	var f:File = File.new()
@@ -90,7 +88,6 @@ func read_File(file):
 	
 	var line:String
 	var currentHeaderPos:int = -1
-#	var currentEntry:String
 	var nextHeaderPos:int = -1
 	
 	#Scan for the first header in the file
@@ -100,7 +97,6 @@ func read_File(file):
 			currentHeaderPos = f.get_position() - line.length() - 2
 			EntryCountOutput.text = str(int(EntryCountOutput.text) + 1) #For the first header
 			break
-#	print_debug(currentHeaderPos, ": ", f.get_path())
 	
 	#If the file doesn't have any headers or is formated wrong escape
 	if currentHeaderPos == -1:
@@ -110,8 +106,12 @@ func read_File(file):
 	
 	#After getting header position run though each entry
 	while not f.eof_reached():
-		nextHeaderPos = get_Next_Header(f, currentHeaderPos)
-		search_Entry(f, currentHeaderPos, nextHeaderPos)
+		#TODO: Possible merge get_next_header with search entry to reduce entry scans
+		nextHeaderPos = get_next_header(f, currentHeaderPos)
+		if search_entry(f, currentHeaderPos, nextHeaderPos):
+			print_to_output(f, currentHeaderPos, nextHeaderPos)
+		if currentHeaderPos == nextHeaderPos:
+			break
 		currentHeaderPos = nextHeaderPos
 	
 	f.close()
@@ -119,7 +119,7 @@ func read_File(file):
 
 #Takes in a file and the current header and then iterates though the lines until the next header is found
 #Returns the next headers start position
-func get_Next_Header(f:File, currentHeaderPos:int) -> int:
+func get_next_header(f:File, currentHeaderPos:int) -> int:
 	f.seek(currentHeaderPos)
 	var line:String = f.get_line()
 	var currentHeaderText:String = line
@@ -135,43 +135,96 @@ func get_Next_Header(f:File, currentHeaderPos:int) -> int:
 	return f.get_position()
 
 
-#Scans though an entry while applying each search key array
-func search_Entry(f:File, currentHeaderPos:int, nextHeaderPos:int) -> bool:
+#Runs though an entry line by line comparing it to the searchKeyArray
+#Returns a bool based on the evaluation of the terms (Should the entry be printed)
+func search_entry(f:File, currentHeaderPos:int, nextHeaderPos:int) -> bool:
+	#Create an array to store whether or not a match has been found
+	var storedMatches:Array = []
+	for i in operationArray.size():
+		if operationArray[i] == "NOT":
+			storedMatches.append(true)
+		else:
+			storedMatches.append(false)
+	
+	var line:String
+	f.seek(currentHeaderPos)
+	
+	#For every line check every term
+	while f.get_position() < nextHeaderPos:
+		line = f.get_line()
+
+		for i in operationArray.size():
+			if storedMatches[i] != true or operationArray[i] == "NOT": #Shortcircut if term has already been met
+				match operationArray[i]:
+					"NOT":
+						if find_match(line, searchKeyArray[i]):
+							storedMatches[i] = false
+							return false
+					"AND":
+						if find_match(line, searchKeyArray[i]):
+							storedMatches[i] = true
+					"OR":
+						var tempOrArray:Array = Array(searchKeyArray[i].split(" or ", true, 0))
+						for j in tempOrArray.size():
+							if find_match(line, tempOrArray[j]) and storedMatches[i] == false:
+								storedMatches[i] = true
+					_:
+						print_debug("ERROR: Invalid Operation in operationArray")
+	
+	#Depending on if all terms have been met output a boolean
+	for i in storedMatches.size():
+		if storedMatches[i] != true:
+			return false
+	return true
+
+func find_match(line:String, term:String) -> bool:
+	if term.to_lower() in line.to_lower():
+		return true
+	else:
+		return false
+
+#Prints out an entry given a start and end header position
+func print_to_output(f:File, currentHeaderPos:int, nextHeaderPos:int):
+	print("ENTRY")
+	f.seek(currentHeaderPos)
+	var line:String = ""
+	while f.get_position() < nextHeaderPos:
+		line = f.get_line()
+		
+		if printDate and not printEntry:
+			if line.matchn(entryHeaderFormat):
+				OutputTextBox.bbcode_text += line + "\n"
+				print(line)
+				return
+		
+		elif printDate and printEntry:
+			OutputTextBox.bbcode_text += line + "\n"
+			print(line)
+
+func apply_coloring():
+	#TODO: Color lines of matching text
+	pass
+
+#Unused
+func loop_through_entry(f:File, currentHeaderPos:int, nextHeaderPos:int):
 	f.seek(currentHeaderPos)
 	var line:String = f.get_line()
-	
-	#TODO: Implement search key arrays here
-	
 	while f.get_position() < nextHeaderPos:
-		if line.matchn(entryHeaderFormat): #DEBUG: THIS LOOP IS USED FOR DEBUGGING ONLY
-			print(line)
-			pass
 		line = f.get_line()
-	
-#	print_debug(currentHeaderPos, " | ",nextHeaderPos, " | ", nextHeaderPos == f.get_position())
-
-	return false
 
 
 #VERIFY: OUTDATED
-func find_Match(line:String) -> bool:
-	for i in searchKeyArray.size():
-		if searchKeyArray[i].to_lower() in line.to_lower():
-			return true
-	return false
-
-
-func print_to_output(line):
-	if printDate and not printEntry:
-		if line.matchn(entryHeaderFormat):
-			OutputTextBox.bbcode_text += line + "\n"
-	elif printDate and printEntry:
-		if find_Match(line):
-			OutputTextBox.bbcode_text += "[color=lime]" + line + "[/color]" + "\n"
-		else:
-			OutputTextBox.bbcode_text += line + "\n"
-	else:
-		return
+#func print_to_output(line):
+#	if printDate and not printEntry:
+#		if line.matchn(entryHeaderFormat):
+#			OutputTextBox.bbcode_text += line + "\n"
+#	elif printDate and printEntry:
+#		if find_match(line, ""):
+#			OutputTextBox.bbcode_text += "[color=lime]" + line + "[/color]" + "\n"
+#		else:
+#			OutputTextBox.bbcode_text += line + "\n"
+#	else:
+#		return
 
 
 func generate_rand_date() -> String:
@@ -205,78 +258,95 @@ func generate_rand_date() -> String:
 
 
 #Converts the user input to a poolStringArray
-func parse_Search_Keys():
+func parse_search_keys():
 	searchKeyArray = SearchKeyInput.text.split(",", false, 0)
 	for i in searchKeyArray.size():
 		searchKeyArray[i] = searchKeyArray[i].strip_edges()
 
 
-#Splits apart searchKeyArray into sub-arrays for later use in matching
-func split_Search_Arrays():
-	#Reset the arrays for appending
-	excludedKeyArray.resize(0)
-	combinedKeyArray.resize(0)
-	defaultKeyArray.resize(0)
+func prepare_search_terms():
+	#Clears the operationArray and corrects its size
+	operationArray.resize(searchKeyArray.size())
+	for j in operationArray.size():
+		operationArray[j] = ""
 	
-	#Seperate elements from main array into exclude, combine, and defaul
+	#Passes in the operation of each term from the searchKeyArray into the operationArray
 	for i in searchKeyArray.size():
-		if searchKeyArray[i].match("-*"):
-			excludedKeyArray.append(searchKeyArray[i])
-		elif searchKeyArray[i].match("+*"):
-			combinedKeyArray.append(searchKeyArray[i])
+		if "-" in searchKeyArray[i] or "NOT " in searchKeyArray[i].to_lower():
+			operationArray[i] = "NOT"
+			searchKeyArray[i] = searchKeyArray[i].replace("-", "")
+		elif " or " in searchKeyArray[i].to_lower():
+			operationArray[i] = "OR"
 		else:
-			defaultKeyArray.append(searchKeyArray[i])
+			operationArray[i] = "AND"
 	
-	#Clean up sub-arrays
-	for i in excludedKeyArray.size():
-		excludedKeyArray[i] = excludedKeyArray[i].replace("-", "")
-	for i in combinedKeyArray.size():
-		combinedKeyArray[i] = combinedKeyArray[i].replace("+", "")
+	#Sorts the arrays to be NOT, AND, then OR
+	var tempSearchKeyArray:PoolStringArray = []
+	var tempOperationArray:PoolStringArray = []
 		
-#	print_debug("DF: ", defaultKeyArray.size(), ": ", defaultKeyArray)
-#	print_debug("CO: ", combinedKeyArray.size(), ": ", combinedKeyArray)
-#	print_debug("EX: ", excludedKeyArray.size(), ": ", excludedKeyArray)
+	for k in searchKeyArray.size():
+		if "NOT" in operationArray[k]:
+			tempSearchKeyArray.append(searchKeyArray[k])
+			tempOperationArray.append(operationArray[k])
+			
+	for k in searchKeyArray.size():
+		if "AND" in operationArray[k]:
+			tempSearchKeyArray.append(searchKeyArray[k])
+			tempOperationArray.append(operationArray[k])
+			
+	for k in searchKeyArray.size():
+		if "OR" in operationArray[k]:
+			tempSearchKeyArray.append(searchKeyArray[k])
+			tempOperationArray.append(operationArray[k])
+	
+	searchKeyArray = tempSearchKeyArray
+	operationArray = tempOperationArray
+	
+	print(searchKeyArray)
+	print(operationArray)
+
 
 #============================ Buttons and Signals
 
 func _on_Run_pressed():
 	#Initializing
-	reset_Statistics()
-	parse_Search_Keys()
-	split_Search_Arrays()
+	reset_statistics()
+	parse_search_keys()
+	
+	prepare_search_terms()
 	
 	print("STARTING...")
-	
+
 	StatusBarOutput.text = "Running"
 	yield(get_tree().create_timer(0.02), "timeout")
-	
-	
+
+
 #	#This checks the input field to see if a directory or txt file is input
 	if SelectionInput.text.match("*.txt"):
 		inputType = INPUT_TYPES.FILE
 	else:
 		inputType = INPUT_TYPES.DIRECTORY
-	
-	
+
+
 	var startTime = OS.get_ticks_msec()
-	
+
 	match inputType:
 		INPUT_TYPES.DIRECTORY:
-			directory_Iterate(SelectionInput.text)
+			directory_iterate(SelectionInput.text)
 		INPUT_TYPES.FILE:
-			read_File(SelectionInput.text)
-	
+			read_file(SelectionInput.text)
+
 	ElapsedTimeOutput.text = str((OS.get_ticks_msec() - startTime) / 1000.0)
-	
+
 	if FileCountOutput.text == "0":
-		reset_Statistics()
+		reset_statistics()
 		StatusBarOutput.text = "ERROR: Bad File Path"
 	else:
 		StatusBarOutput.text = "Finished"
 
 
 func _on_Clear_pressed():
-	reset_Statistics()
+	reset_statistics()
 
 
 func _on_Quit_pressed():
@@ -284,7 +354,7 @@ func _on_Quit_pressed():
 
 
 func _on_Search_Keys_text_changed(_new_text):
-	parse_Search_Keys()
+	parse_search_keys()
 
 
 func _on_FileSelect_pressed():
@@ -332,7 +402,7 @@ func _on_RandomDate_pressed():
 	if not SearchKeyInput.text.empty():
 		SearchKeyInput.text += ", "
 	SearchKeyInput.text += generate_rand_date()
-	parse_Search_Keys()
+	parse_search_keys()
 
 #Exporting Text to File
 func _on_ExportBtn_pressed():
