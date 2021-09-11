@@ -15,37 +15,41 @@ var printDate:bool = true
 
 var searchKeyArray : PoolStringArray = [] #Holds the comma seperated search terms
 var operationArray : PoolStringArray = [] #Stores the operation of each search term
+var allTermsArray : PoolStringArray = [] #Stores every term, used in printing to output
 
 var rng = RandomNumberGenerator.new()
 
 #---------------------------- NODES
-onready var SelectionInput = $MarginContainer/GUI/PanelContainer/VBoxContainer/HBoxContainer/SelectionInput
+onready var SelectionInput = $MarginContainer/HBoxContainer/GUI/FileSelection/SelectionInput
 onready var InputFileDialog = $SingleInputFileDialog
-onready var SearchKeyInput = $MarginContainer/GUI/PanelContainer/VBoxContainer/HBoxContainer2/SearchKeyInput
+onready var SearchKeyInput = $MarginContainer/HBoxContainer/GUI/SearchKey/SearchKeyInput
 
 onready var OutputFileConfirm = $OutputFileConfirmation
 onready var OutputFileName = $OutputFileConfirmation/LineEdit
 
-onready var FileCountOutput = $MarginContainer/GUI/LowerHalf/MiddleSide/Statistics/HBoxContainer/VBoxContainer2/FileCount
-onready var EntryCountOutput = $MarginContainer/GUI/LowerHalf/MiddleSide/Statistics/HBoxContainer/VBoxContainer2/EntryCount
-onready var MatchCountOutput = $MarginContainer/GUI/LowerHalf/MiddleSide/Statistics/HBoxContainer/VBoxContainer2/MatchCount
-onready var ElapsedTimeOutput = $MarginContainer/GUI/LowerHalf/MiddleSide/Statistics/HBoxContainer/VBoxContainer2/ElapsedTime
-onready var OutputWindow = $MarginContainer/GUI/OutputWindow
-onready var OutputTextBox = $MarginContainer/GUI/OutputWindow/TextBox
+onready var FileCountOutput = $MarginContainer/HBoxContainer/GUI/Statistics/HBoxContainer/DataValues/FileCount
+onready var EntryCountOutput = $MarginContainer/HBoxContainer/GUI/Statistics/HBoxContainer/DataValues/EntryCount
+onready var MatchCountOutput = $MarginContainer/HBoxContainer/GUI/Statistics/HBoxContainer/DataValues/MatchCount
+onready var ElapsedTimeOutput = $MarginContainer/HBoxContainer/GUI/Statistics/HBoxContainer/DataValues/ElapsedTime
+onready var OutputWindow = $MarginContainer/HBoxContainer/OutputWindow
+onready var OutputTextBox = $MarginContainer/HBoxContainer/OutputWindow/TextBox
 
-onready var StatusBarOutput = $MarginContainer/GUI/Progress/VBoxContainer/StatusBar
-onready var LoadingBar = $MarginContainer/GUI/Progress/VBoxContainer/ProgressBar
+onready var StatusBarOutput = $MarginContainer/HBoxContainer/GUI/StatusBar
 
-onready var AppendButton = $MarginContainer/GUI/LowerHalf/RightSide/Export/VBoxContainer/HBoxContainer/Append
-onready var OverwriteButton = $MarginContainer/GUI/LowerHalf/RightSide/Export/VBoxContainer/HBoxContainer/Overwrite
-onready var printEntryButton = $MarginContainer/GUI/LowerHalf/LeftSide/OperationButtons/VBoxContainer/HBoxContainer2/PrintEntry
-onready var printDateButton = $MarginContainer/GUI/LowerHalf/LeftSide/OperationButtons/VBoxContainer/HBoxContainer2/PrintDate
+onready var AppendButton = $MarginContainer/HBoxContainer/GUI/LowerControl/ExportControls/VBoxContainer/ExportModeButton/Append
+onready var OverwriteButton = $MarginContainer/HBoxContainer/GUI/LowerControl/ExportControls/VBoxContainer/ExportModeButton/Overwrite
+
+onready var printEntryButton = $MarginContainer/HBoxContainer/GUI/RunButtons/OutputButtons/PrintEntry
+onready var printDateButton = $MarginContainer/HBoxContainer/GUI/RunButtons/OutputButtons/PrintDate
+
+#---
+onready var CaseSenseToggle = $MarginContainer/HBoxContainer/GUI/SearchKey/SearchKeyButtons/CaseSensitive
 
 #============================ Functions
 
 func _ready():
 	OS.set_window_position(OS.get_screen_size()*0.5 - OS.get_window_size()*0.5)
-	reset_statistics()
+#	reset_statistics()
 	rng.randomize()
 
 func _unhandled_input(event):
@@ -60,7 +64,7 @@ func reset_statistics():
 	ElapsedTimeOutput.text = "0"
 	StatusBarOutput.text = "Idle"
 	OutputTextBox.bbcode_text = ""
-	LoadingBar.value = 0
+#	LoadingBar.value = 0
 
 
 #Recursively loops though directories and retrieves files
@@ -134,7 +138,6 @@ func get_next_header(f:File, currentHeaderPos:int) -> int:
 	f.seek_end(0)
 	return f.get_position()
 
-
 #Runs though an entry line by line comparing it to the searchKeyArray
 #Returns a bool based on the evaluation of the terms (Should the entry be printed)
 func search_entry(f:File, currentHeaderPos:int, nextHeaderPos:int) -> bool:
@@ -177,54 +180,105 @@ func search_entry(f:File, currentHeaderPos:int, nextHeaderPos:int) -> bool:
 			return false
 	return true
 
+#Compares a line of text with a keyword
+#Returns bool depending on if term is contained within line
 func find_match(line:String, term:String) -> bool:
-	if term.to_lower() in line.to_lower():
+	if not CaseSenseToggle.pressed:
+		term = term.to_lower()
+		line = line.to_lower()
+	
+	if term in line:
 		return true
 	else:
 		return false
 
 #Prints out an entry given a start and end header position
 func print_to_output(f:File, currentHeaderPos:int, nextHeaderPos:int):
-	print("ENTRY")
+	
+	#TODO: Use this to get the end of a file to add a new line
+#	f.seek_end(0)
+#	print("END: ", f.get_position())
+	
 	f.seek(currentHeaderPos)
 	var line:String = ""
+	
 	while f.get_position() < nextHeaderPos:
+		
+		
 		line = f.get_line()
 		
 		if printDate and not printEntry:
 			if line.matchn(entryHeaderFormat):
 				OutputTextBox.bbcode_text += line + "\n"
-				print(line)
 				return
 		
 		elif printDate and printEntry:
-			OutputTextBox.bbcode_text += line + "\n"
-			print(line)
+			for i in allTermsArray.size():
+				if find_match(line, allTermsArray[i]):
+					line = "[color=lime]" + line + "[/color]"
+		OutputTextBox.bbcode_text += line + "\n"
 
-func apply_coloring():
-	#TODO: Color lines of matching text
-	pass
 
 #Unused
-func loop_through_entry(f:File, currentHeaderPos:int, nextHeaderPos:int):
-	f.seek(currentHeaderPos)
-	var line:String = f.get_line()
-	while f.get_position() < nextHeaderPos:
-		line = f.get_line()
+#func loop_through_entry(f:File, currentHeaderPos:int, nextHeaderPos:int):
+#	f.seek(currentHeaderPos)
+#	var line:String = f.get_line()
+#	while f.get_position() < nextHeaderPos:
+#		line = f.get_line()
 
 
-#VERIFY: OUTDATED
-#func print_to_output(line):
-#	if printDate and not printEntry:
-#		if line.matchn(entryHeaderFormat):
-#			OutputTextBox.bbcode_text += line + "\n"
-#	elif printDate and printEntry:
-#		if find_match(line, ""):
-#			OutputTextBox.bbcode_text += "[color=lime]" + line + "[/color]" + "\n"
-#		else:
-#			OutputTextBox.bbcode_text += line + "\n"
-#	else:
-#		return
+#Converts the user input to a poolStringArray
+func parse_search_keys():
+	searchKeyArray = SearchKeyInput.text.split(",", false, 0)
+	for i in searchKeyArray.size():
+		searchKeyArray[i] = searchKeyArray[i].strip_edges()
+
+#Creates the matching operationArray to the searchKeyArray
+func prepare_search_terms():
+	#Clears the operationArray and corrects its size
+	operationArray.resize(searchKeyArray.size())
+	for j in operationArray.size():
+		operationArray[j] = ""
+	
+	#Passes in the operation of each term from the searchKeyArray into the operationArray
+	for i in searchKeyArray.size():
+		if "-" in searchKeyArray[i] or "NOT " in searchKeyArray[i].to_lower():
+			operationArray[i] = "NOT"
+			searchKeyArray[i] = searchKeyArray[i].replace("-", "")
+		elif " or " in searchKeyArray[i].to_lower():
+			operationArray[i] = "OR"
+		else:
+			operationArray[i] = "AND"
+	
+	sort_search_keys()
+	
+	#Generates the allTermsArray used in output printing
+	var tempString:String = SearchKeyInput.text.replace(" or ", ",")
+	tempString = tempString.replace(" ", "")
+	allTermsArray = tempString.split(",", false)
+
+#Sorts the arrays to be NOT, AND, then OR
+func sort_search_keys():
+	var tempSearchKeyArray:PoolStringArray = []
+	var tempOperationArray:PoolStringArray = []
+		
+	for k in searchKeyArray.size():
+		if "NOT" in operationArray[k]:
+			tempSearchKeyArray.append(searchKeyArray[k])
+			tempOperationArray.append(operationArray[k])
+			
+	for k in searchKeyArray.size():
+		if "AND" in operationArray[k]:
+			tempSearchKeyArray.append(searchKeyArray[k])
+			tempOperationArray.append(operationArray[k])
+			
+	for k in searchKeyArray.size():
+		if "OR" in operationArray[k]:
+			tempSearchKeyArray.append(searchKeyArray[k])
+			tempOperationArray.append(operationArray[k])
+	
+	searchKeyArray = tempSearchKeyArray
+	operationArray = tempOperationArray
 
 
 func generate_rand_date() -> String:
@@ -257,57 +311,9 @@ func generate_rand_date() -> String:
 	return output
 
 
-#Converts the user input to a poolStringArray
-func parse_search_keys():
-	searchKeyArray = SearchKeyInput.text.split(",", false, 0)
-	for i in searchKeyArray.size():
-		searchKeyArray[i] = searchKeyArray[i].strip_edges()
-
-
-func prepare_search_terms():
-	#Clears the operationArray and corrects its size
-	operationArray.resize(searchKeyArray.size())
-	for j in operationArray.size():
-		operationArray[j] = ""
-	
-	#Passes in the operation of each term from the searchKeyArray into the operationArray
-	for i in searchKeyArray.size():
-		if "-" in searchKeyArray[i] or "NOT " in searchKeyArray[i].to_lower():
-			operationArray[i] = "NOT"
-			searchKeyArray[i] = searchKeyArray[i].replace("-", "")
-		elif " or " in searchKeyArray[i].to_lower():
-			operationArray[i] = "OR"
-		else:
-			operationArray[i] = "AND"
-	
-	#Sorts the arrays to be NOT, AND, then OR
-	var tempSearchKeyArray:PoolStringArray = []
-	var tempOperationArray:PoolStringArray = []
-		
-	for k in searchKeyArray.size():
-		if "NOT" in operationArray[k]:
-			tempSearchKeyArray.append(searchKeyArray[k])
-			tempOperationArray.append(operationArray[k])
-			
-	for k in searchKeyArray.size():
-		if "AND" in operationArray[k]:
-			tempSearchKeyArray.append(searchKeyArray[k])
-			tempOperationArray.append(operationArray[k])
-			
-	for k in searchKeyArray.size():
-		if "OR" in operationArray[k]:
-			tempSearchKeyArray.append(searchKeyArray[k])
-			tempOperationArray.append(operationArray[k])
-	
-	searchKeyArray = tempSearchKeyArray
-	operationArray = tempOperationArray
-	
-	print(searchKeyArray)
-	print(operationArray)
-
-
 #============================ Buttons and Signals
 
+#Major control function for running the program
 func _on_Run_pressed():
 	#Initializing
 	reset_statistics()
@@ -345,58 +351,22 @@ func _on_Run_pressed():
 		StatusBarOutput.text = "Finished"
 
 
-func _on_Clear_pressed():
-	reset_statistics()
-
-
-func _on_Quit_pressed():
-	get_tree().quit()
-
-
-func _on_Search_Keys_text_changed(_new_text):
-	parse_search_keys()
-
-
+#File/Input location selection
 func _on_FileSelect_pressed():
 	InputFileDialog.popup_centered_ratio(1.0)
 	InputFileDialog.current_path = SelectionInput.text
 	InputFileDialog.current_dir = SelectionInput.text
 
+func _on_FilesSelect_pressed():
+	pass # Replace with function body.
 
-func _on_WindowToggleBtn_toggled(button_pressed):
-	OutputWindow.visible = button_pressed
-	if button_pressed:
-		OS.min_window_size = bigWindowSize
-		OS.window_size.y = bigWindowSize.y
-	if not button_pressed:
-		OS.min_window_size = windowSize
-		OS.window_size.y = windowSize.y
-	OS.set_window_position(OS.get_screen_size()*0.5 - OS.get_window_size()*0.5)
+func _on_FromOutput_toggled(button_pressed):
+	pass # Replace with function body.
 
 
-#File Input
-func _on_SingleInputFileDialog_dir_selected(dir):
-	inputType = INPUT_TYPES.DIRECTORY
-	SelectionInput.text = dir
-
-
-func _on_SingleInputFileDialog_file_selected(path):
-	inputType = INPUT_TYPES.FILE
-	SelectionInput.text = path
-
-
-#Can only print entries if the date is printed as well.
-func _on_PrintDate_toggled(button_pressed):
-	printDate = button_pressed
-	if printDate == false:
-		printEntryButton.pressed = false
-
-
-func _on_PrintEntry_toggled(button_pressed):
-	printEntry = button_pressed
-	if printEntry == true:
-		printDateButton.pressed = true
-
+#Search Key Input and Control
+func _on_Search_Keys_text_changed(_new_text):
+	parse_search_keys()
 
 func _on_RandomDate_pressed():
 	if not SearchKeyInput.text.empty():
@@ -404,10 +374,36 @@ func _on_RandomDate_pressed():
 	SearchKeyInput.text += generate_rand_date()
 	parse_search_keys()
 
-#Exporting Text to File
-func _on_ExportBtn_pressed():
-	OutputFileConfirm.popup()
+func _on_TodaysDate_pressed():
+	pass # Replace with function body.
 
+func _on_CaseSensitive_toggled(button_pressed):
+	pass # Replace with function body.
+
+
+#Control for what is output after running
+func _on_PrintDate_toggled(button_pressed):
+	printDate = button_pressed
+#	if printDate == false:
+#		printEntryButton.pressed = false
+
+func _on_PrintEntry_toggled(button_pressed):
+	printEntry = button_pressed
+#	if printEntry == true:
+#		printDateButton.pressed = true
+
+func _on_PrintLine_toggled(button_pressed):
+	pass # Replace with function body.
+
+
+#Popup Controls
+func _on_SingleInputFileDialog_dir_selected(dir):
+	inputType = INPUT_TYPES.DIRECTORY
+	SelectionInput.text = dir
+
+func _on_SingleInputFileDialog_file_selected(path):
+	inputType = INPUT_TYPES.FILE
+	SelectionInput.text = path
 
 func _on_OutputFileConfirmation_confirmed():
 
@@ -436,3 +432,19 @@ func _on_OutputFileConfirmation_confirmed():
 	file.store_string(OutputTextBox.bbcode_text)
 	file2Check.close()
 	file.close()
+
+
+#Exporting Text to File
+func _on_ExportBtn_pressed():
+	OutputFileConfirm.popup()
+
+
+#Terminal Buttons that reset or end the program
+func _on_Help_pressed():
+	pass # Replace with function body.
+
+func _on_Clear_pressed():
+	reset_statistics()
+
+func _on_Quit_pressed():
+	get_tree().quit()

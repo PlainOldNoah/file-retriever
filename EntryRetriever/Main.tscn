@@ -1,6 +1,8 @@
-[gd_scene load_steps=5 format=2]
+[gd_scene load_steps=6 format=2]
 
 [ext_resource path="res://Main.gd" type="Script" id=1]
+
+[sub_resource type="ButtonGroup" id=4]
 
 [sub_resource type="InputEventAction" id=1]
 action = "ui_accept"
@@ -13,7 +15,7 @@ shortcut = SubResource( 1 )
 [node name="PanelContainer" type="PanelContainer"]
 anchor_right = 1.0
 anchor_bottom = 1.0
-rect_min_size = Vector2( 700, 320 )
+rect_min_size = Vector2( 0, 700 )
 size_flags_horizontal = 3
 size_flags_vertical = 3
 script = ExtResource( 1 )
@@ -24,8 +26,10 @@ __meta__ = {
 [node name="MarginContainer" type="MarginContainer" parent="."]
 margin_left = 7.0
 margin_top = 7.0
-margin_right = 693.0
-margin_bottom = 313.0
+margin_right = 993.0
+margin_bottom = 693.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
 custom_constants/margin_right = 8
 custom_constants/margin_top = 8
 custom_constants/margin_left = 8
@@ -34,398 +38,420 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="GUI" type="VBoxContainer" parent="MarginContainer"]
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer"]
 margin_left = 8.0
 margin_top = 8.0
-margin_right = 678.0
-margin_bottom = 298.0
+margin_right = 978.0
+margin_bottom = 678.0
+
+[node name="GUI" type="VBoxContainer" parent="MarginContainer/HBoxContainer"]
+margin_right = 400.0
+margin_bottom = 670.0
+rect_min_size = Vector2( 0, 30 )
 custom_constants/separation = 10
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="Label" type="Label" parent="MarginContainer/GUI"]
-margin_right = 670.0
+[node name="Version" type="Label" parent="MarginContainer/HBoxContainer/GUI"]
+margin_right = 400.0
 margin_bottom = 14.0
+size_flags_vertical = 1
 text = "  Entry Retriever (v.1.0.0)"
 valign = 1
 
-[node name="PanelContainer" type="PanelContainer" parent="MarginContainer/GUI"]
+[node name="FileSelection" type="VBoxContainer" parent="MarginContainer/HBoxContainer/GUI"]
 margin_top = 24.0
-margin_right = 670.0
-margin_bottom = 102.0
-
-[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/GUI/PanelContainer"]
-margin_left = 7.0
-margin_top = 7.0
-margin_right = 663.0
-margin_bottom = 71.0
-
-[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/GUI/PanelContainer/VBoxContainer"]
-margin_right = 656.0
-margin_bottom = 30.0
-
-[node name="SelectionInput" type="LineEdit" parent="MarginContainer/GUI/PanelContainer/VBoxContainer/HBoxContainer"]
-margin_right = 574.0
-margin_bottom = 30.0
+margin_right = 400.0
+margin_bottom = 94.0
 rect_min_size = Vector2( 0, 30 )
-size_flags_horizontal = 3
-size_flags_vertical = 3
+custom_constants/separation = 10
+
+[node name="SelectionInput" type="LineEdit" parent="MarginContainer/HBoxContainer/GUI/FileSelection"]
+margin_right = 400.0
+margin_bottom = 30.0
+rect_min_size = Vector2( 400, 30 )
 text = "C:/Users/Noah/Library/Entires/TestFile.txt"
 clear_button_enabled = true
 placeholder_text = "Select a File or Directory to Scan Though"
 caret_blink = true
 caret_blink_speed = 0.5
 
-[node name="FileSelect" type="Button" parent="MarginContainer/GUI/PanelContainer/VBoxContainer/HBoxContainer"]
-margin_left = 578.0
-margin_right = 656.0
-margin_bottom = 30.0
+[node name="FileSelectButtons" type="HBoxContainer" parent="MarginContainer/HBoxContainer/GUI/FileSelection"]
+margin_top = 40.0
+margin_right = 400.0
+margin_bottom = 70.0
 rect_min_size = Vector2( 0, 30 )
-size_flags_horizontal = 8
-size_flags_vertical = 3
-text = "Select File"
+size_flags_horizontal = 3
+custom_constants/separation = 10
 
-[node name="HBoxContainer2" type="HBoxContainer" parent="MarginContainer/GUI/PanelContainer/VBoxContainer"]
-margin_top = 34.0
-margin_right = 656.0
-margin_bottom = 64.0
-
-[node name="SearchKeyInput" type="LineEdit" parent="MarginContainer/GUI/PanelContainer/VBoxContainer/HBoxContainer2"]
-margin_right = 554.0
+[node name="FileSelect" type="Button" parent="MarginContainer/HBoxContainer/GUI/FileSelection/FileSelectButtons"]
+margin_right = 126.0
 margin_bottom = 30.0
 rect_min_size = Vector2( 0, 30 )
 size_flags_horizontal = 3
+text = "Select File"
+
+[node name="FilesSelect" type="Button" parent="MarginContainer/HBoxContainer/GUI/FileSelection/FileSelectButtons"]
+margin_left = 136.0
+margin_right = 262.0
+margin_bottom = 30.0
+rect_min_size = Vector2( 0, 30 )
+size_flags_horizontal = 3
+text = "Select Files"
+
+[node name="FromOutput" type="CheckBox" parent="MarginContainer/HBoxContainer/GUI/FileSelection/FileSelectButtons"]
+margin_left = 272.0
+margin_right = 400.0
+margin_bottom = 30.0
+rect_min_size = Vector2( 0, 30 )
+size_flags_horizontal = 3
+text = "From Output"
+
+[node name="SearchKey" type="VBoxContainer" parent="MarginContainer/HBoxContainer/GUI"]
+margin_top = 104.0
+margin_right = 400.0
+margin_bottom = 174.0
+rect_min_size = Vector2( 0, 30 )
+custom_constants/separation = 10
+
+[node name="SearchKeyInput" type="LineEdit" parent="MarginContainer/HBoxContainer/GUI/SearchKey"]
+margin_right = 400.0
+margin_bottom = 30.0
+rect_min_size = Vector2( 100, 30 )
 clear_button_enabled = true
-placeholder_text = "Enter Comma Seperated Words or Phrases to Search By"
+placeholder_text = "Enter Comma Seperated Terms to Search By"
 caret_blink = true
 caret_blink_speed = 0.5
 
-[node name="RandomDate" type="Button" parent="MarginContainer/GUI/PanelContainer/VBoxContainer/HBoxContainer2"]
-margin_left = 558.0
-margin_right = 656.0
-margin_bottom = 30.0
-text = "Random Date"
-
-[node name="Progress" type="PanelContainer" parent="MarginContainer/GUI"]
-margin_top = 112.0
-margin_right = 670.0
-margin_bottom = 156.0
+[node name="SearchKeyButtons" type="HBoxContainer" parent="MarginContainer/HBoxContainer/GUI/SearchKey"]
+margin_top = 40.0
+margin_right = 400.0
+margin_bottom = 70.0
+rect_min_size = Vector2( 0, 30 )
 size_flags_horizontal = 3
-size_flags_stretch_ratio = 0.5
+custom_constants/separation = 10
+__meta__ = {
+"_editor_description_": ""
+}
 
-[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/GUI/Progress"]
-margin_left = 7.0
-margin_top = 7.0
-margin_right = 663.0
-margin_bottom = 37.0
-
-[node name="ProgressBar" type="ProgressBar" parent="MarginContainer/GUI/Progress/VBoxContainer"]
-visible = false
-margin_right = 756.0
-margin_bottom = 35.0
-rect_min_size = Vector2( 0, 35 )
-size_flags_horizontal = 3
-size_flags_vertical = 3
-
-[node name="StatusBar" type="LineEdit" parent="MarginContainer/GUI/Progress/VBoxContainer"]
-margin_right = 656.0
+[node name="RandomDate" type="Button" parent="MarginContainer/HBoxContainer/GUI/SearchKey/SearchKeyButtons"]
+margin_right = 126.0
 margin_bottom = 30.0
 rect_min_size = Vector2( 0, 30 )
 size_flags_horizontal = 3
-size_flags_vertical = 0
+text = "Random Date"
+
+[node name="TodaysDate" type="Button" parent="MarginContainer/HBoxContainer/GUI/SearchKey/SearchKeyButtons"]
+margin_left = 136.0
+margin_right = 262.0
+margin_bottom = 30.0
+rect_min_size = Vector2( 0, 30 )
+size_flags_horizontal = 3
+text = "Today's Date"
+
+[node name="CaseSensitive" type="CheckBox" parent="MarginContainer/HBoxContainer/GUI/SearchKey/SearchKeyButtons"]
+margin_left = 272.0
+margin_right = 400.0
+margin_bottom = 30.0
+rect_min_size = Vector2( 0, 30 )
+size_flags_horizontal = 3
+text = "Case Sensitive"
+
+[node name="HSeparator" type="HSeparator" parent="MarginContainer/HBoxContainer/GUI"]
+margin_top = 184.0
+margin_right = 400.0
+margin_bottom = 194.0
+custom_constants/separation = 10
+
+[node name="StatusBar" type="LineEdit" parent="MarginContainer/HBoxContainer/GUI"]
+margin_top = 204.0
+margin_right = 400.0
+margin_bottom = 234.0
+rect_min_size = Vector2( 0, 30 )
 align = 1
 editable = false
 placeholder_text = "Status"
 
-[node name="LowerHalf" type="HBoxContainer" parent="MarginContainer/GUI"]
-margin_top = 166.0
-margin_right = 670.0
-margin_bottom = 286.0
+[node name="RunButtons" type="VBoxContainer" parent="MarginContainer/HBoxContainer/GUI"]
+margin_top = 244.0
+margin_right = 400.0
+margin_bottom = 328.0
+rect_min_size = Vector2( 0, 30 )
 
-[node name="LeftSide" type="VBoxContainer" parent="MarginContainer/GUI/LowerHalf"]
-margin_right = 239.0
-margin_bottom = 120.0
+[node name="OutputButtons" type="HBoxContainer" parent="MarginContainer/HBoxContainer/GUI/RunButtons"]
+margin_right = 400.0
+margin_bottom = 30.0
+rect_min_size = Vector2( 0, 30 )
 size_flags_horizontal = 3
-size_flags_stretch_ratio = 1.2
+custom_constants/separation = 10
+__meta__ = {
+"_editor_description_": ""
+}
 
-[node name="OperationButtons" type="PanelContainer" parent="MarginContainer/GUI/LowerHalf/LeftSide"]
-margin_right = 239.0
-margin_bottom = 120.0
+[node name="PrintEntry" type="CheckBox" parent="MarginContainer/HBoxContainer/GUI/RunButtons/OutputButtons"]
+margin_right = 126.0
+margin_bottom = 30.0
+rect_min_size = Vector2( 0, 30 )
 size_flags_horizontal = 3
-size_flags_vertical = 3
-
-[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/GUI/LowerHalf/LeftSide/OperationButtons"]
-margin_left = 7.0
-margin_top = 7.0
-margin_right = 232.0
-margin_bottom = 113.0
-size_flags_horizontal = 3
-size_flags_vertical = 3
-custom_constants/separation = 5
-
-[node name="HBoxContainer2" type="HBoxContainer" parent="MarginContainer/GUI/LowerHalf/LeftSide/OperationButtons/VBoxContainer"]
-margin_right = 225.0
-margin_bottom = 32.0
-size_flags_horizontal = 3
-size_flags_vertical = 3
-
-[node name="PrintDate" type="CheckBox" parent="MarginContainer/GUI/LowerHalf/LeftSide/OperationButtons/VBoxContainer/HBoxContainer2"]
-margin_right = 110.0
-margin_bottom = 32.0
-size_flags_horizontal = 3
-size_flags_vertical = 3
 custom_constants/hseparation = 10
 pressed = true
-text = "Print Date"
+group = SubResource( 4 )
+text = "Full Entry"
+
+[node name="PrintDate" type="CheckBox" parent="MarginContainer/HBoxContainer/GUI/RunButtons/OutputButtons"]
+margin_left = 136.0
+margin_right = 262.0
+margin_bottom = 30.0
+rect_min_size = Vector2( 0, 30 )
+size_flags_horizontal = 3
+custom_constants/hseparation = 10
+group = SubResource( 4 )
+text = "Date Only"
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="PrintEntry" type="CheckBox" parent="MarginContainer/GUI/LowerHalf/LeftSide/OperationButtons/VBoxContainer/HBoxContainer2"]
-margin_left = 114.0
-margin_right = 225.0
-margin_bottom = 32.0
-size_flags_horizontal = 3
-size_flags_vertical = 3
-custom_constants/hseparation = 10
-pressed = true
-text = "Print Entry"
-
-[node name="Run" type="Button" parent="MarginContainer/GUI/LowerHalf/LeftSide/OperationButtons/VBoxContainer"]
-margin_top = 37.0
-margin_right = 225.0
-margin_bottom = 69.0
+[node name="PrintLine" type="CheckBox" parent="MarginContainer/HBoxContainer/GUI/RunButtons/OutputButtons"]
+margin_left = 272.0
+margin_right = 400.0
+margin_bottom = 30.0
 rect_min_size = Vector2( 0, 30 )
 size_flags_horizontal = 3
-size_flags_vertical = 3
+group = SubResource( 4 )
+text = "Line Only"
+
+[node name="Run" type="Button" parent="MarginContainer/HBoxContainer/GUI/RunButtons"]
+margin_top = 34.0
+margin_right = 400.0
+margin_bottom = 84.0
+rect_min_size = Vector2( 0, 50 )
 shortcut_in_tooltip = false
 shortcut = SubResource( 2 )
 text = "Run"
 
-[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/GUI/LowerHalf/LeftSide/OperationButtons/VBoxContainer"]
-margin_top = 74.0
-margin_right = 225.0
-margin_bottom = 106.0
-size_flags_horizontal = 3
-size_flags_vertical = 3
-
-[node name="Clear" type="Button" parent="MarginContainer/GUI/LowerHalf/LeftSide/OperationButtons/VBoxContainer/HBoxContainer"]
-margin_right = 110.0
-margin_bottom = 32.0
-rect_min_size = Vector2( 0, 30 )
-size_flags_horizontal = 3
-size_flags_vertical = 3
-text = "Reset"
-
-[node name="Quit" type="Button" parent="MarginContainer/GUI/LowerHalf/LeftSide/OperationButtons/VBoxContainer/HBoxContainer"]
-margin_left = 114.0
-margin_right = 225.0
-margin_bottom = 32.0
-rect_min_size = Vector2( 0, 30 )
-size_flags_horizontal = 3
-size_flags_vertical = 3
-text = "Quit"
-
-[node name="VSeparator" type="VSeparator" parent="MarginContainer/GUI/LowerHalf"]
-margin_left = 243.0
-margin_right = 258.0
-margin_bottom = 120.0
-custom_constants/separation = 15
-
-[node name="MiddleSide" type="VBoxContainer" parent="MarginContainer/GUI/LowerHalf"]
-margin_left = 262.0
-margin_right = 461.0
-margin_bottom = 120.0
-size_flags_horizontal = 3
-
-[node name="Statistics" type="PanelContainer" parent="MarginContainer/GUI/LowerHalf/MiddleSide"]
-margin_right = 199.0
-margin_bottom = 120.0
-size_flags_horizontal = 3
-size_flags_vertical = 3
-
-[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/GUI/LowerHalf/MiddleSide/Statistics"]
-margin_left = 7.0
-margin_top = 7.0
-margin_right = 192.0
-margin_bottom = 113.0
+[node name="HSeparator2" type="HSeparator" parent="MarginContainer/HBoxContainer/GUI"]
+margin_top = 338.0
+margin_right = 400.0
+margin_bottom = 348.0
 custom_constants/separation = 10
 
-[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/GUI/LowerHalf/MiddleSide/Statistics/HBoxContainer"]
+[node name="Statistics" type="PanelContainer" parent="MarginContainer/HBoxContainer/GUI"]
+margin_top = 358.0
+margin_right = 400.0
+margin_bottom = 504.0
+rect_min_size = Vector2( 0, 30 )
+size_flags_horizontal = 7
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/HBoxContainer/GUI/Statistics"]
+margin_left = 7.0
+margin_top = 7.0
+margin_right = 393.0
+margin_bottom = 139.0
+rect_min_size = Vector2( 0, 30 )
+custom_constants/separation = 10
+
+[node name="DataNames" type="VBoxContainer" parent="MarginContainer/HBoxContainer/GUI/Statistics/HBoxContainer"]
 margin_right = 117.0
-margin_bottom = 106.0
-size_flags_horizontal = 3
-size_flags_vertical = 3
+margin_bottom = 132.0
+rect_min_size = Vector2( 0, 30 )
 size_flags_stretch_ratio = 0.6
 
-[node name="FilesLabel" type="Label" parent="MarginContainer/GUI/LowerHalf/MiddleSide/Statistics/HBoxContainer/VBoxContainer"]
+[node name="FilesLabel" type="Label" parent="MarginContainer/HBoxContainer/GUI/Statistics/HBoxContainer/DataNames"]
 margin_right = 117.0
-margin_bottom = 23.0
-size_flags_horizontal = 3
-size_flags_vertical = 3
+margin_bottom = 30.0
+rect_min_size = Vector2( 0, 30 )
+size_flags_vertical = 1
 text = "Scanned Files: "
 align = 2
 valign = 1
 
-[node name="EntriesLabel" type="Label" parent="MarginContainer/GUI/LowerHalf/MiddleSide/Statistics/HBoxContainer/VBoxContainer"]
-margin_top = 27.0
+[node name="EntriesLabel" type="Label" parent="MarginContainer/HBoxContainer/GUI/Statistics/HBoxContainer/DataNames"]
+margin_top = 34.0
 margin_right = 117.0
-margin_bottom = 50.0
-size_flags_horizontal = 3
-size_flags_vertical = 3
+margin_bottom = 64.0
+rect_min_size = Vector2( 0, 30 )
+size_flags_vertical = 1
 text = "Total Entries: "
 align = 2
 valign = 1
 
-[node name="MatchesLabel" type="Label" parent="MarginContainer/GUI/LowerHalf/MiddleSide/Statistics/HBoxContainer/VBoxContainer"]
-margin_top = 54.0
+[node name="MatchesLabel" type="Label" parent="MarginContainer/HBoxContainer/GUI/Statistics/HBoxContainer/DataNames"]
+margin_top = 68.0
 margin_right = 117.0
-margin_bottom = 77.0
-size_flags_horizontal = 3
-size_flags_vertical = 3
+margin_bottom = 98.0
+rect_min_size = Vector2( 0, 30 )
+size_flags_vertical = 1
 text = "Retrieved Entries: "
 align = 2
 valign = 1
 
-[node name="TimeLabel" type="Label" parent="MarginContainer/GUI/LowerHalf/MiddleSide/Statistics/HBoxContainer/VBoxContainer"]
-margin_top = 81.0
+[node name="TimeLabel" type="Label" parent="MarginContainer/HBoxContainer/GUI/Statistics/HBoxContainer/DataNames"]
+margin_top = 102.0
 margin_right = 117.0
-margin_bottom = 106.0
-size_flags_horizontal = 3
-size_flags_vertical = 3
+margin_bottom = 132.0
+rect_min_size = Vector2( 0, 30 )
+size_flags_vertical = 1
 text = "Search Time: "
 align = 2
 valign = 1
 
-[node name="VBoxContainer2" type="VBoxContainer" parent="MarginContainer/GUI/LowerHalf/MiddleSide/Statistics/HBoxContainer"]
+[node name="DataValues" type="VBoxContainer" parent="MarginContainer/HBoxContainer/GUI/Statistics/HBoxContainer"]
 margin_left = 127.0
-margin_right = 185.0
-margin_bottom = 106.0
-size_flags_horizontal = 3
-size_flags_vertical = 3
+margin_right = 135.0
+margin_bottom = 132.0
+rect_min_size = Vector2( 0, 30 )
 
-[node name="FileCount" type="Label" parent="MarginContainer/GUI/LowerHalf/MiddleSide/Statistics/HBoxContainer/VBoxContainer2"]
-margin_right = 58.0
-margin_bottom = 23.0
-size_flags_horizontal = 3
-size_flags_vertical = 3
+[node name="FileCount" type="Label" parent="MarginContainer/HBoxContainer/GUI/Statistics/HBoxContainer/DataValues"]
+margin_right = 8.0
+margin_bottom = 30.0
+rect_min_size = Vector2( 0, 30 )
+size_flags_vertical = 1
 text = "0"
 valign = 1
 
-[node name="EntryCount" type="Label" parent="MarginContainer/GUI/LowerHalf/MiddleSide/Statistics/HBoxContainer/VBoxContainer2"]
-margin_top = 27.0
-margin_right = 58.0
-margin_bottom = 50.0
-size_flags_horizontal = 3
-size_flags_vertical = 3
+[node name="EntryCount" type="Label" parent="MarginContainer/HBoxContainer/GUI/Statistics/HBoxContainer/DataValues"]
+margin_top = 34.0
+margin_right = 8.0
+margin_bottom = 64.0
+rect_min_size = Vector2( 0, 30 )
+size_flags_vertical = 1
 text = "0"
 valign = 1
 
-[node name="MatchCount" type="Label" parent="MarginContainer/GUI/LowerHalf/MiddleSide/Statistics/HBoxContainer/VBoxContainer2"]
-margin_top = 54.0
-margin_right = 58.0
-margin_bottom = 77.0
-size_flags_horizontal = 3
-size_flags_vertical = 3
+[node name="MatchCount" type="Label" parent="MarginContainer/HBoxContainer/GUI/Statistics/HBoxContainer/DataValues"]
+margin_top = 68.0
+margin_right = 8.0
+margin_bottom = 98.0
+rect_min_size = Vector2( 0, 30 )
+size_flags_vertical = 1
 text = "0"
 valign = 1
 
-[node name="ElapsedTime" type="Label" parent="MarginContainer/GUI/LowerHalf/MiddleSide/Statistics/HBoxContainer/VBoxContainer2"]
-margin_top = 81.0
-margin_right = 58.0
-margin_bottom = 106.0
-size_flags_horizontal = 3
-size_flags_vertical = 3
+[node name="ElapsedTime" type="Label" parent="MarginContainer/HBoxContainer/GUI/Statistics/HBoxContainer/DataValues"]
+margin_top = 102.0
+margin_right = 8.0
+margin_bottom = 132.0
+rect_min_size = Vector2( 0, 30 )
+size_flags_vertical = 1
 text = "0"
 valign = 1
 
-[node name="VSeparator2" type="VSeparator" parent="MarginContainer/GUI/LowerHalf"]
-margin_left = 465.0
-margin_right = 465.0
-margin_bottom = 120.0
-custom_constants/separation = 0
+[node name="LowerControl" type="VBoxContainer" parent="MarginContainer/HBoxContainer/GUI"]
+margin_top = 538.0
+margin_right = 400.0
+margin_bottom = 670.0
+size_flags_vertical = 10
+custom_constants/separation = 10
 
-[node name="RightSide" type="VBoxContainer" parent="MarginContainer/GUI/LowerHalf"]
-margin_left = 469.0
-margin_right = 670.0
-margin_bottom = 120.0
-size_flags_horizontal = 3
+[node name="ExportControls" type="PanelContainer" parent="MarginContainer/HBoxContainer/GUI/LowerControl"]
+margin_right = 400.0
+margin_bottom = 78.0
+rect_min_size = Vector2( 0, 30 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
 
-[node name="Export" type="PanelContainer" parent="MarginContainer/GUI/LowerHalf/RightSide"]
-margin_right = 201.0
-margin_bottom = 72.0
-size_flags_horizontal = 3
-size_flags_vertical = 3
-size_flags_stretch_ratio = 1.5
-
-[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/GUI/LowerHalf/RightSide/Export"]
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/HBoxContainer/GUI/LowerControl/ExportControls"]
 margin_left = 7.0
 margin_top = 7.0
-margin_right = 194.0
-margin_bottom = 65.0
+margin_right = 393.0
+margin_bottom = 71.0
 
-[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/GUI/LowerHalf/RightSide/Export/VBoxContainer"]
-margin_right = 187.0
-margin_bottom = 24.0
+[node name="ExportModeButton" type="HBoxContainer" parent="MarginContainer/HBoxContainer/GUI/LowerControl/ExportControls/VBoxContainer"]
+margin_right = 386.0
+margin_bottom = 30.0
+rect_min_size = Vector2( 0, 30 )
 
-[node name="Append" type="CheckBox" parent="MarginContainer/GUI/LowerHalf/RightSide/Export/VBoxContainer/HBoxContainer"]
-margin_right = 86.0
-margin_bottom = 24.0
-size_flags_horizontal = 3
-size_flags_vertical = 3
+[node name="Append" type="CheckBox" parent="MarginContainer/HBoxContainer/GUI/LowerControl/ExportControls/VBoxContainer/ExportModeButton"]
+margin_left = 54.0
+margin_right = 137.0
+margin_bottom = 30.0
+rect_min_size = Vector2( 0, 30 )
+size_flags_horizontal = 6
 custom_constants/hseparation = 10
 pressed = true
 group = SubResource( 3 )
 text = "Append"
 
-[node name="Overwrite" type="CheckBox" parent="MarginContainer/GUI/LowerHalf/RightSide/Export/VBoxContainer/HBoxContainer"]
-margin_left = 90.0
-margin_right = 187.0
-margin_bottom = 24.0
-size_flags_horizontal = 3
-size_flags_vertical = 3
+[node name="Overwrite" type="CheckBox" parent="MarginContainer/HBoxContainer/GUI/LowerControl/ExportControls/VBoxContainer/ExportModeButton"]
+margin_left = 242.0
+margin_right = 339.0
+margin_bottom = 30.0
+rect_min_size = Vector2( 0, 30 )
+size_flags_horizontal = 6
 custom_constants/hseparation = 10
 group = SubResource( 3 )
 text = "Overwrite"
 
-[node name="ExportBtn" type="Button" parent="MarginContainer/GUI/LowerHalf/RightSide/Export/VBoxContainer"]
-margin_top = 28.0
-margin_right = 187.0
-margin_bottom = 58.0
+[node name="ExportBtn" type="Button" parent="MarginContainer/HBoxContainer/GUI/LowerControl/ExportControls/VBoxContainer"]
+margin_top = 34.0
+margin_right = 386.0
+margin_bottom = 64.0
 rect_min_size = Vector2( 0, 30 )
-size_flags_horizontal = 3
-size_flags_vertical = 3
 text = "Export to Output File"
 
-[node name="WindowToggle" type="PanelContainer" parent="MarginContainer/GUI/LowerHalf/RightSide"]
-margin_top = 76.0
-margin_right = 201.0
-margin_bottom = 120.0
-size_flags_horizontal = 3
-size_flags_vertical = 3
-
-[node name="WindowToggleBtn" type="CheckBox" parent="MarginContainer/GUI/LowerHalf/RightSide/WindowToggle"]
-margin_left = 7.0
-margin_top = 7.0
-margin_right = 194.0
-margin_bottom = 37.0
+[node name="FinalButtons" type="PanelContainer" parent="MarginContainer/HBoxContainer/GUI/LowerControl"]
+margin_top = 88.0
+margin_right = 400.0
+margin_bottom = 132.0
 rect_min_size = Vector2( 0, 30 )
-custom_constants/hseparation = 10
-text = "Toggle Output Screen"
+__meta__ = {
+"_edit_use_anchors_": false
+}
 
-[node name="OutputWindow" type="PanelContainer" parent="MarginContainer/GUI"]
-visible = false
-margin_top = 296.0
-margin_right = 670.0
-margin_bottom = 310.0
-size_flags_vertical = 3
-
-[node name="TextBox" type="RichTextLabel" parent="MarginContainer/GUI/OutputWindow"]
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/HBoxContainer/GUI/LowerControl/FinalButtons"]
 margin_left = 7.0
 margin_top = 7.0
-margin_right = 663.0
-margin_bottom = 7.0
+margin_right = 393.0
+margin_bottom = 37.0
+custom_constants/separation = 10
+
+[node name="Clear" type="Button" parent="MarginContainer/HBoxContainer/GUI/LowerControl/FinalButtons/HBoxContainer"]
+margin_right = 155.0
+margin_bottom = 30.0
+rect_min_size = Vector2( 0, 30 )
+size_flags_horizontal = 3
+text = "Reset"
+
+[node name="Quit" type="Button" parent="MarginContainer/HBoxContainer/GUI/LowerControl/FinalButtons/HBoxContainer"]
+margin_left = 165.0
+margin_right = 320.0
+margin_bottom = 30.0
+rect_min_size = Vector2( 0, 30 )
+size_flags_horizontal = 3
+text = "Quit"
+
+[node name="Help" type="Button" parent="MarginContainer/HBoxContainer/GUI/LowerControl/FinalButtons/HBoxContainer"]
+margin_left = 330.0
+margin_right = 386.0
+margin_bottom = 30.0
+rect_min_size = Vector2( 0, 30 )
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 0.35
+text = "Help"
+__meta__ = {
+"_editor_description_": ""
+}
+
+[node name="VSeparator" type="VSeparator" parent="MarginContainer/HBoxContainer"]
+margin_left = 404.0
+margin_right = 414.0
+margin_bottom = 670.0
+custom_constants/separation = 10
+
+[node name="OutputWindow" type="PanelContainer" parent="MarginContainer/HBoxContainer"]
+self_modulate = Color( 0.721569, 0.721569, 0.721569, 1 )
+margin_left = 418.0
+margin_right = 970.0
+margin_bottom = 670.0
+size_flags_horizontal = 3
+
+[node name="TextBox" type="RichTextLabel" parent="MarginContainer/HBoxContainer/OutputWindow"]
+margin_left = 7.0
+margin_top = 7.0
+margin_right = 545.0
+margin_bottom = 663.0
 focus_mode = 2
 custom_constants/line_separation = 2
 bbcode_enabled = true
@@ -435,7 +461,7 @@ selection_enabled = true
 margin_left = 7.0
 margin_top = 7.0
 margin_right = 693.0
-margin_bottom = 333.0
+margin_bottom = 711.0
 rect_min_size = Vector2( 400, 140 )
 rect_clip_content = true
 size_flags_horizontal = 3
@@ -451,13 +477,13 @@ current_path = "/Main_Hub/Game Dev/Projects/GitEntryRetriever/EntryRetriever/"
 
 [node name="OutputFileConfirmation" type="ConfirmationDialog" parent="."]
 margin_left = 200.0
-margin_top = 126.0
+margin_top = 325.0
 margin_right = 500.0
-margin_bottom = 194.0
+margin_bottom = 393.0
 rect_min_size = Vector2( 300, 0 )
 rect_clip_content = true
-size_flags_horizontal = 6
-size_flags_vertical = 6
+size_flags_horizontal = 3
+size_flags_vertical = 3
 popup_exclusive = true
 window_title = ""
 
@@ -478,16 +504,21 @@ placeholder_text = "Enter Output Filename"
 __meta__ = {
 "_edit_use_anchors_": false
 }
-[connection signal="pressed" from="MarginContainer/GUI/PanelContainer/VBoxContainer/HBoxContainer/FileSelect" to="." method="_on_FileSelect_pressed"]
-[connection signal="text_changed" from="MarginContainer/GUI/PanelContainer/VBoxContainer/HBoxContainer2/SearchKeyInput" to="." method="_on_Search_Keys_text_changed"]
-[connection signal="pressed" from="MarginContainer/GUI/PanelContainer/VBoxContainer/HBoxContainer2/RandomDate" to="." method="_on_RandomDate_pressed"]
-[connection signal="toggled" from="MarginContainer/GUI/LowerHalf/LeftSide/OperationButtons/VBoxContainer/HBoxContainer2/PrintDate" to="." method="_on_PrintDate_toggled"]
-[connection signal="toggled" from="MarginContainer/GUI/LowerHalf/LeftSide/OperationButtons/VBoxContainer/HBoxContainer2/PrintEntry" to="." method="_on_PrintEntry_toggled"]
-[connection signal="pressed" from="MarginContainer/GUI/LowerHalf/LeftSide/OperationButtons/VBoxContainer/Run" to="." method="_on_Run_pressed"]
-[connection signal="pressed" from="MarginContainer/GUI/LowerHalf/LeftSide/OperationButtons/VBoxContainer/HBoxContainer/Clear" to="." method="_on_Clear_pressed"]
-[connection signal="pressed" from="MarginContainer/GUI/LowerHalf/LeftSide/OperationButtons/VBoxContainer/HBoxContainer/Quit" to="." method="_on_Quit_pressed"]
-[connection signal="pressed" from="MarginContainer/GUI/LowerHalf/RightSide/Export/VBoxContainer/ExportBtn" to="." method="_on_ExportBtn_pressed"]
-[connection signal="toggled" from="MarginContainer/GUI/LowerHalf/RightSide/WindowToggle/WindowToggleBtn" to="." method="_on_WindowToggleBtn_toggled"]
+[connection signal="pressed" from="MarginContainer/HBoxContainer/GUI/FileSelection/FileSelectButtons/FileSelect" to="." method="_on_FileSelect_pressed"]
+[connection signal="pressed" from="MarginContainer/HBoxContainer/GUI/FileSelection/FileSelectButtons/FilesSelect" to="." method="_on_FilesSelect_pressed"]
+[connection signal="toggled" from="MarginContainer/HBoxContainer/GUI/FileSelection/FileSelectButtons/FromOutput" to="." method="_on_FromOutput_toggled"]
+[connection signal="text_changed" from="MarginContainer/HBoxContainer/GUI/SearchKey/SearchKeyInput" to="." method="_on_Search_Keys_text_changed"]
+[connection signal="pressed" from="MarginContainer/HBoxContainer/GUI/SearchKey/SearchKeyButtons/RandomDate" to="." method="_on_RandomDate_pressed"]
+[connection signal="pressed" from="MarginContainer/HBoxContainer/GUI/SearchKey/SearchKeyButtons/TodaysDate" to="." method="_on_TodaysDate_pressed"]
+[connection signal="toggled" from="MarginContainer/HBoxContainer/GUI/SearchKey/SearchKeyButtons/CaseSensitive" to="." method="_on_CaseSensitive_toggled"]
+[connection signal="toggled" from="MarginContainer/HBoxContainer/GUI/RunButtons/OutputButtons/PrintEntry" to="." method="_on_PrintEntry_toggled"]
+[connection signal="toggled" from="MarginContainer/HBoxContainer/GUI/RunButtons/OutputButtons/PrintDate" to="." method="_on_PrintDate_toggled"]
+[connection signal="toggled" from="MarginContainer/HBoxContainer/GUI/RunButtons/OutputButtons/PrintLine" to="." method="_on_PrintLine_toggled"]
+[connection signal="pressed" from="MarginContainer/HBoxContainer/GUI/RunButtons/Run" to="." method="_on_Run_pressed"]
+[connection signal="pressed" from="MarginContainer/HBoxContainer/GUI/LowerControl/ExportControls/VBoxContainer/ExportBtn" to="." method="_on_ExportBtn_pressed"]
+[connection signal="pressed" from="MarginContainer/HBoxContainer/GUI/LowerControl/FinalButtons/HBoxContainer/Clear" to="." method="_on_Clear_pressed"]
+[connection signal="pressed" from="MarginContainer/HBoxContainer/GUI/LowerControl/FinalButtons/HBoxContainer/Quit" to="." method="_on_Quit_pressed"]
+[connection signal="pressed" from="MarginContainer/HBoxContainer/GUI/LowerControl/FinalButtons/HBoxContainer/Help" to="." method="_on_Help_pressed"]
 [connection signal="dir_selected" from="SingleInputFileDialog" to="." method="_on_SingleInputFileDialog_dir_selected"]
 [connection signal="file_selected" from="SingleInputFileDialog" to="." method="_on_SingleInputFileDialog_file_selected"]
 [connection signal="confirmed" from="OutputFileConfirmation" to="." method="_on_OutputFileConfirmation_confirmed"]
