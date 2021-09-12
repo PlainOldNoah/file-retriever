@@ -1,21 +1,21 @@
 extends PanelContainer
 
-const windowSize = Vector2(700, 320)
-const bigWindowSize = Vector2(700, 720)
-
 var inputFolderFormat = "Logs - *"
 var inputFileFormat = "(??) * - *"
 var entryHeaderFormat = "*/*/*, *day"
+var startingDate = {"year":2017, "month":1, "day":1,}
 
 enum INPUT_TYPES {DIRECTORY, FILE, FILES}
 var inputType
 
-var printEntry:bool = true
-var printDate:bool = true
-
 var searchKeyArray : PoolStringArray = [] #Holds the comma seperated search terms
 var operationArray : PoolStringArray = [] #Stores the operation of each search term
 var allTermsArray : PoolStringArray = [] #Stores every term, used in printing to output
+
+enum printOptions {FULL, DATE, MATCHEDLINE}
+export (printOptions) var printOption = printOptions.FULL
+
+var estimatedTotalDays: int = 0
 
 var rng = RandomNumberGenerator.new()
 
@@ -37,19 +37,13 @@ onready var OutputTextBox = $MarginContainer/HBoxContainer/OutputWindow/TextBox
 onready var StatusBarOutput = $MarginContainer/HBoxContainer/GUI/StatusBar
 
 onready var AppendButton = $MarginContainer/HBoxContainer/GUI/LowerControl/ExportControls/VBoxContainer/ExportModeButton/Append
-onready var OverwriteButton = $MarginContainer/HBoxContainer/GUI/LowerControl/ExportControls/VBoxContainer/ExportModeButton/Overwrite
 
-onready var printEntryButton = $MarginContainer/HBoxContainer/GUI/RunButtons/OutputButtons/PrintEntry
-onready var printDateButton = $MarginContainer/HBoxContainer/GUI/RunButtons/OutputButtons/PrintDate
-
-#---
 onready var CaseSenseToggle = $MarginContainer/HBoxContainer/GUI/SearchKey/SearchKeyButtons/CaseSensitive
 
 #============================ Functions
 
 func _ready():
 	OS.set_window_position(OS.get_screen_size()*0.5 - OS.get_window_size()*0.5)
-#	reset_statistics()
 	rng.randomize()
 
 func _unhandled_input(event):
@@ -64,7 +58,6 @@ func reset_statistics():
 	ElapsedTimeOutput.text = "0"
 	StatusBarOutput.text = "Idle"
 	OutputTextBox.bbcode_text = ""
-#	LoadingBar.value = 0
 
 
 #Recursively loops though directories and retrieves files
@@ -195,7 +188,7 @@ func find_match(line:String, term:String) -> bool:
 #Prints out an entry given a start and end header position
 func print_to_output(f:File, currentHeaderPos:int, nextHeaderPos:int):
 	
-	#TODO: Use this to get the end of a file to add a new line
+#	TODO: Use this to get the end of a file to add a new line
 #	f.seek_end(0)
 #	print("END: ", f.get_position())
 	
@@ -204,19 +197,30 @@ func print_to_output(f:File, currentHeaderPos:int, nextHeaderPos:int):
 	
 	while f.get_position() < nextHeaderPos:
 		
-		
 		line = f.get_line()
 		
-		if printDate and not printEntry:
-			if line.matchn(entryHeaderFormat):
+		match get_print_option():
+			0: #Full
+				for i in allTermsArray.size():
+					if find_match(line, allTermsArray[i]):
+						line = "[color=lime]" + line + "[/color]"
 				OutputTextBox.bbcode_text += line + "\n"
-				return
-		
-		elif printDate and printEntry:
-			for i in allTermsArray.size():
-				if find_match(line, allTermsArray[i]):
-					line = "[color=lime]" + line + "[/color]"
-		OutputTextBox.bbcode_text += line + "\n"
+			
+			1: #Date
+				if line.matchn(entryHeaderFormat):
+					OutputTextBox.bbcode_text += line + "\n"
+					return
+				
+			2: #Matched Line
+				for i in allTermsArray.size():
+					if line.matchn(entryHeaderFormat):
+						if OutputTextBox.bbcode_text.empty():
+							OutputTextBox.bbcode_text += line + "\n"
+						else:
+							OutputTextBox.bbcode_text += "\n" + line + "\n"
+							
+					elif find_match(line, allTermsArray[i]):
+						OutputTextBox.bbcode_text += line + "\n"
 
 
 #Unused
@@ -281,35 +285,43 @@ func sort_search_keys():
 	operationArray = tempOperationArray
 
 
+#Finds the number of days since 1/1/2017 and selects a random date
+#Then reverse engineer that value into a date:string that is returned
 func generate_rand_date() -> String:
-	var date = OS.get_date()
-	var year = rng.randi_range(2017, date.year)
-	var month = 01
-	var day = 1
+	var currentDate:Dictionary = OS.get_date()
+	var yearLength:float = 365.25
+	var monthLength:float = 30.4375
 	
-	if year != date.year:
-		month = rng.randi_range(1, 12)
-	else:
-		month = rng.randi_range(1, date.month)
+	#Estimating number of days since 1/1/2017
+	if estimatedTotalDays == 0: #Determine about how many days have passed since the startingDate
+		var tempSum:float = (currentDate.year - startingDate.year) * yearLength #year:days
+		tempSum += (currentDate.month - startingDate.month) * monthLength       #month:days
+		tempSum += currentDate.day
+		estimatedTotalDays = floor(tempSum)
 	
-	var maxDay = 31
-	if year == date.year and month == date.month:
-		maxDay = date.day
-	elif month == 2:
-		if year % 4 == 0:
-			maxDay = 29
-		else:
-			maxDay = 28
-	elif month == 4 or month == 6 or month == 9 or month == 11:
-		maxDay = 30
-	day = rng.randi_range(1, maxDay)
+	#Generating Random Date
+	var randomNumber = rng.randi_range(0, estimatedTotalDays)
+	var randomDate = {"year": 0, "month": 0, "day":0}
 	
-	year = str(year)
-	year.erase(0, 2)
+	randomDate.year = floor(randomNumber / yearLength)
+	randomNumber -= randomDate.year * yearLength
 	
-	var output = str(month) + "/" + str(day) + "/" + year
+	randomDate.month = round(randomNumber / monthLength)
+	randomDate.day = round(fmod(randomNumber, monthLength))
+	
+	#Cleaning Values
+	randomDate.year += 17 #Instead of adding 2017 and removing the 20, just add 17
+	randomDate.day = max(randomDate.day, 1)
+	randomDate.month = max(randomDate.month, 1)
+	
+	#Returning
+	var output = str(randomDate.month) + "/" + str(randomDate.day) + "/" + str(randomDate.year)
 	return output
 
+#============================ Getters
+
+func get_print_option() -> int:
+	return(printOption)
 
 #============================ Buttons and Signals
 
@@ -327,7 +339,7 @@ func _on_Run_pressed():
 	yield(get_tree().create_timer(0.02), "timeout")
 
 
-#	#This checks the input field to see if a directory or txt file is input
+	#This checks the input field to see if a directory or txt file is input
 	if SelectionInput.text.match("*.txt"):
 		inputType = INPUT_TYPES.FILE
 	else:
@@ -369,31 +381,35 @@ func _on_Search_Keys_text_changed(_new_text):
 	parse_search_keys()
 
 func _on_RandomDate_pressed():
-	if not SearchKeyInput.text.empty():
-		SearchKeyInput.text += ", "
-	SearchKeyInput.text += generate_rand_date()
+	SearchKeyInput.text = generate_rand_date()
 	parse_search_keys()
 
+#Gets the current date and puts it into the search key input
 func _on_TodaysDate_pressed():
-	pass # Replace with function body.
+	var date = OS.get_date()
+	var searchDate = str(date.month) + "/" + str(date.day) + "/"
+	SearchKeyInput.text = searchDate
+	
+	#If shift is held down, add exclusion dates which narrow results and increase seach time
+	if Input.is_key_pressed(KEY_SHIFT):
+		for i in (date.year - startingDate.year + 1):
+			var year = str(startingDate.year + i)
+			
+			SearchKeyInput.text += ", "
+			SearchKeyInput.text += "-" + str(date.month) + "/" + str(date.day) + "/" + year
+			
+	parse_search_keys()
 
-func _on_CaseSensitive_toggled(button_pressed):
-	pass # Replace with function body.
 
+#Buttons for controlling what to send to output window
+func _on_PrintEntry_pressed():
+	printOption = printOptions.FULL
 
-#Control for what is output after running
-func _on_PrintDate_toggled(button_pressed):
-	printDate = button_pressed
-#	if printDate == false:
-#		printEntryButton.pressed = false
+func _on_PrintDate_pressed():
+	printOption = printOptions.DATE
 
-func _on_PrintEntry_toggled(button_pressed):
-	printEntry = button_pressed
-#	if printEntry == true:
-#		printDateButton.pressed = true
-
-func _on_PrintLine_toggled(button_pressed):
-	pass # Replace with function body.
+func _on_PrintLine_pressed():
+	printOption = printOptions.MATCHEDLINE
 
 
 #Popup Controls
@@ -444,7 +460,10 @@ func _on_Help_pressed():
 	pass # Replace with function body.
 
 func _on_Clear_pressed():
-	reset_statistics()
+	if Input.is_key_pressed(KEY_SHIFT):
+		get_tree().reload_current_scene()
+	else:
+		reset_statistics()
 
 func _on_Quit_pressed():
 	get_tree().quit()
