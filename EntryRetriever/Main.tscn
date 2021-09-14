@@ -71,7 +71,7 @@ custom_constants/separation = 10
 margin_right = 400.0
 margin_bottom = 30.0
 rect_min_size = Vector2( 400, 30 )
-text = "C:/Users/Noah/Library/Entires/TestFile.txt"
+text = "C:/Users/Noah/Library/Entires/EntrieverTestFiles/TestFile3.txt"
 clear_button_enabled = true
 placeholder_text = "Select a File or Directory to Scan Though"
 caret_blink = true
@@ -262,7 +262,7 @@ margin_right = 117.0
 margin_bottom = 30.0
 rect_min_size = Vector2( 0, 30 )
 size_flags_vertical = 1
-text = "Scanned Files: "
+text = "Files Scanned: "
 align = 2
 valign = 1
 
@@ -272,7 +272,7 @@ margin_right = 117.0
 margin_bottom = 64.0
 rect_min_size = Vector2( 0, 30 )
 size_flags_vertical = 1
-text = "Total Entries: "
+text = "Entires Scanned: "
 align = 2
 valign = 1
 

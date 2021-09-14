@@ -8,6 +8,12 @@ var startingDate = {"year":2017, "month":1, "day":1,}
 enum INPUT_TYPES {DIRECTORY, FILE, FILES}
 var inputType
 
+var currentHeaderText:String = ""
+var line:String = ""
+var currentHeaderPos:int = -1 #f.position of beginning of current header
+var nextHeaderPos:int = -1    #f.position of the next header OR f.seek_end(0) position
+var endOfFilePos:int = -1     #f.seek_end(0)
+
 var searchKeyArray : PoolStringArray = [] #Holds the comma seperated search terms
 var operationArray : PoolStringArray = [] #Stores the operation of each search term
 var allTermsArray : PoolStringArray = [] #Stores every term, used in printing to output
@@ -77,23 +83,49 @@ func directory_iterate(path):
 	else:
 		print_debug("ERROR: Bad Path Parameter: ", path)
 
+#Gets the position of the End of the File, The First Header, The Second Header (If it exists)
+func initialize_file_read(f:File):
+	#Reset positions and lines of text
+	currentHeaderText = ""
+	line = ""
+	currentHeaderPos = -1
+	nextHeaderPos = -1
+	endOfFilePos = -1
+	
+	#Get the final position of the file
+	f.seek_end(0)
+	endOfFilePos = f.get_position()
+	f.seek(0)
+	
+	#Get the first and second header positions
+	while not f.eof_reached():
+		line = f.get_line()
+		if line.matchn(entryHeaderFormat):
+			#Scan for the First Header in the File
+			if currentHeaderText.empty():
+				currentHeaderText = line
+				currentHeaderPos = f.get_position() - line.length() - 2
+#				EntryCountOutput.text = str(int(EntryCountOutput.text) + 1) #For the first header
+			#Scan for the second Header in the File
+			else:
+#				EntryCountOutput.text = str(int(EntryCountOutput.text) + 1) #For all other headers
+				nextHeaderPos = f.get_position() - line.length() - 2
+				return
+	
+	#If there is no Next Header then set it to the end of the file
+	nextHeaderPos = endOfFilePos
+	return
+
+
 func read_file(file):
 	FileCountOutput.text = str(int(FileCountOutput.text) + 1)
 	
 	var f:File = File.new()
 	var _err = f.open(file, File.READ)
 	
-	var line:String
-	var currentHeaderPos:int = -1
-	var nextHeaderPos:int = -1
+#	var line:String
 	
-	#Scan for the first header in the file
-	while not f.eof_reached():
-		line = f.get_line()
-		if line.matchn(entryHeaderFormat):
-			currentHeaderPos = f.get_position() - line.length() - 2
-			EntryCountOutput.text = str(int(EntryCountOutput.text) + 1) #For the first header
-			break
+	initialize_file_read(f)
 	
 	#If the file doesn't have any headers or is formated wrong escape
 	if currentHeaderPos == -1:
@@ -101,39 +133,71 @@ func read_file(file):
 		f.close()
 		return
 	
-	#After getting header position run though each entry
-	while not f.eof_reached():
-		#TODO: Possible merge get_next_header with search entry to reduce entry scans
-		nextHeaderPos = get_next_header(f, currentHeaderPos)
-		if search_entry(f, currentHeaderPos, nextHeaderPos):
-			print_to_output(f, currentHeaderPos, nextHeaderPos)
-		if currentHeaderPos == nextHeaderPos:
-			break
-		currentHeaderPos = nextHeaderPos
+#	#After getting header position run though each entry
+#	while not f.eof_reached():
+#		#TODO: Possible merge get_next_header with search entry to reduce entry scans
+#		nextHeaderPos = get_next_header(f, currentHeaderPos)
+#		if search_entry(f, currentHeaderPos, nextHeaderPos):
+#			print_to_output(f, currentHeaderPos, nextHeaderPos)
+#		if currentHeaderPos == nextHeaderPos:
+#			break
+#		currentHeaderPos = nextHeaderPos
+		
+	while not currentHeaderPos == nextHeaderPos:
+		if search_entry(f):
+			print_to_output(f)
+		
+		get_next_entry(f)
+		
+#		if currentHeaderPos == nextHeaderPos:
+#			break
 	
+#		currentHeaderPos = nextHeaderPos
+#		currentHeaderText = line
+		
 	f.close()
 
 
-#Takes in a file and the current header and then iterates though the lines until the next header is found
-#Returns the next headers start position
-func get_next_header(f:File, currentHeaderPos:int) -> int:
-	f.seek(currentHeaderPos)
-	var line:String = f.get_line()
-	var currentHeaderText:String = line
+func get_next_entry(f:File):
+	f.seek(nextHeaderPos)
+	line = f.get_line()
+	currentHeaderPos = nextHeaderPos
+	currentHeaderText = line
 	
-	while not f.eof_reached():
+	#Scan though the rest of the file to find the next header
+	while f.get_position() < endOfFilePos:
 		#Return the cursors position is the next header is found
 		if line.matchn(entryHeaderFormat) and not line.match(currentHeaderText):
-			EntryCountOutput.text = str(int(EntryCountOutput.text) + 1) #For all other headers
-			return f.get_position() - line.length() - 2
+			nextHeaderPos = f.get_position() - line.length() - 2
+			return
 		line = f.get_line()
 	
-	f.seek_end(0)
-	return f.get_position()
+	#If all else fails just return the end of file position
+	nextHeaderPos = endOfFilePos
+	return
+
+#Takes in a file and the current header and then iterates though the lines until the next header is found
+#Returns the next headers start position
+#func OLD_get_next_header(f:File, currentHeaderPos:int) -> int:
+#	f.seek(currentHeaderPos)
+#	var line:String = f.get_line()
+#	currentHeaderText = line
+#
+#	while not f.eof_reached():
+#		#Return the cursors position is the next header is found
+#		if line.matchn(entryHeaderFormat) and not line.match(currentHeaderText):
+#			EntryCountOutput.text = str(int(EntryCountOutput.text) + 1) #For all other headers
+#			return f.get_position() - line.length() - 2
+#		line = f.get_line()
+#
+#	f.seek_end(0)
+#	return f.get_position()
 
 #Runs though an entry line by line comparing it to the searchKeyArray
-#Returns a bool based on the evaluation of the terms (Should the entry be printed)
-func search_entry(f:File, currentHeaderPos:int, nextHeaderPos:int) -> bool:
+#Returns a bool based on the evaluation of the terms (Are all search terms true)
+func search_entry(f:File) -> bool:
+	EntryCountOutput.text = str(int(EntryCountOutput.text) + 1)
+	
 	#Create an array to store whether or not a match has been found
 	var storedMatches:Array = []
 	for i in operationArray.size():
@@ -142,7 +206,7 @@ func search_entry(f:File, currentHeaderPos:int, nextHeaderPos:int) -> bool:
 		else:
 			storedMatches.append(false)
 	
-	var line:String
+#	var line:String
 	f.seek(currentHeaderPos)
 	
 	#For every line check every term
@@ -175,25 +239,26 @@ func search_entry(f:File, currentHeaderPos:int, nextHeaderPos:int) -> bool:
 
 #Compares a line of text with a keyword
 #Returns bool depending on if term is contained within line
-func find_match(line:String, term:String) -> bool:
+func find_match(lineToCheck:String, term:String) -> bool:
 	if not CaseSenseToggle.pressed:
 		term = term.to_lower()
-		line = line.to_lower()
+		lineToCheck = lineToCheck.to_lower()
 	
-	if term in line:
+	if term in lineToCheck:
 		return true
 	else:
 		return false
 
 #Prints out an entry given a start and end header position
-func print_to_output(f:File, currentHeaderPos:int, nextHeaderPos:int):
+func print_to_output(f:File):
+	MatchCountOutput.text = str(int(MatchCountOutput.text) + 1)
 	
 #	TODO: Use this to get the end of a file to add a new line
 #	f.seek_end(0)
 #	print("END: ", f.get_position())
 	
 	f.seek(currentHeaderPos)
-	var line:String = ""
+#	var line:String = ""
 	
 	while f.get_position() < nextHeaderPos:
 		
@@ -221,7 +286,6 @@ func print_to_output(f:File, currentHeaderPos:int, nextHeaderPos:int):
 							
 					elif find_match(line, allTermsArray[i]):
 						OutputTextBox.bbcode_text += line + "\n"
-
 
 #Unused
 #func loop_through_entry(f:File, currentHeaderPos:int, nextHeaderPos:int):
@@ -297,6 +361,7 @@ func generate_rand_date() -> String:
 		var tempSum:float = (currentDate.year - startingDate.year) * yearLength #year:days
 		tempSum += (currentDate.month - startingDate.month) * monthLength       #month:days
 		tempSum += currentDate.day
+# warning-ignore:narrowing_conversion
 		estimatedTotalDays = floor(tempSum)
 	
 	#Generating Random Date
@@ -461,7 +526,7 @@ func _on_Help_pressed():
 
 func _on_Clear_pressed():
 	if Input.is_key_pressed(KEY_SHIFT):
-		get_tree().reload_current_scene()
+		var _err = get_tree().reload_current_scene()
 	else:
 		reset_statistics()
 
