@@ -9,7 +9,7 @@ enum INPUT_TYPES {DIRECTORY, FILE, FILES}
 var inputType
 
 var currentHeaderText:String = ""
-var line:String = ""
+var line:String = "" setget set_line
 var currentHeaderPos:int = -1 #f.position of beginning of current header
 var nextHeaderPos:int = -1    #f.position of the next header OR f.seek_end(0) position
 var endOfFilePos:int = -1     #f.seek_end(0)
@@ -83,6 +83,35 @@ func directory_iterate(path):
 	else:
 		print_debug("ERROR: Bad Path Parameter: ", path)
 
+#Main control func for opening files and reading entires
+#Reads line by line and funs various functions to see if entires should be printed
+func read_file(file):
+	FileCountOutput.text = str(int(FileCountOutput.text) + 1)
+	
+	var f:File = File.new()
+	var _err = f.open(file, File.READ)
+	
+	initialize_file_read(f)
+	
+	#If the file doesn't have any headers or is formated wrong escape
+	if currentHeaderPos == -1:
+		print_debug("ERROR: Bad File Format: ", f.get_path())
+		f.close()
+		return
+	
+	#Main loop for reading entries
+	while not f.eof_reached() and nextHeaderPos != endOfFilePos:
+		if search_entry(f):
+			continue_to_next_header(f)
+			print_to_output(f)
+		else:
+			continue_to_next_header(f)
+			
+		currentHeaderPos = nextHeaderPos
+		currentHeaderText = line
+		
+	f.close()
+
 #Gets the position of the End of the File, The First Header, The Second Header (If it exists)
 func initialize_file_read(f:File):
 	#Reset positions and lines of text
@@ -97,84 +126,76 @@ func initialize_file_read(f:File):
 	endOfFilePos = f.get_position()
 	f.seek(0)
 	
-	#Get the first and second header positions
+#	#Get the first and second header positions
+#	while not f.eof_reached():
+#		line = f.get_line()
+#		if line.matchn(entryHeaderFormat):
+#			#Scan for the First Header in the File
+#			if currentHeaderText.empty():
+#				currentHeaderText = line
+#				currentHeaderPos = f.get_position() - line.length() - 2
+#			#Scan for the second Header in the File
+#			else:
+#				nextHeaderPos = f.get_position() - line.length() - 2
+#				return
+				
 	while not f.eof_reached():
-		line = f.get_line()
-		if line.matchn(entryHeaderFormat):
-			#Scan for the First Header in the File
-			if currentHeaderText.empty():
-				currentHeaderText = line
-				currentHeaderPos = f.get_position() - line.length() - 2
-#				EntryCountOutput.text = str(int(EntryCountOutput.text) + 1) #For the first header
+#		line = f.get_line()
+		print("Init")
+		set_line(f.get_line())
+		
+		if line.matchn(entryHeaderFormat) and currentHeaderText.empty():
+			currentHeaderText = line
+			currentHeaderPos = f.get_position() - line.length() - 2
 			#Scan for the second Header in the File
-			else:
-#				EntryCountOutput.text = str(int(EntryCountOutput.text) + 1) #For all other headers
-				nextHeaderPos = f.get_position() - line.length() - 2
-				return
+			return
 	
 	#If there is no Next Header then set it to the end of the file
-	nextHeaderPos = endOfFilePos
+	currentHeaderPos = -1
 	return
 
+#Goes from the next header position
+func continue_to_next_header(f:File):
+#	print("FIRST: ", currentHeaderPos, " | CURR: ", f.get_position(), " | NEXT: ", nextHeaderPos)
 
-func read_file(file):
-	FileCountOutput.text = str(int(FileCountOutput.text) + 1)
-	
-	var f:File = File.new()
-	var _err = f.open(file, File.READ)
-	
-#	var line:String
-	
-	initialize_file_read(f)
-	
-	#If the file doesn't have any headers or is formated wrong escape
-	if currentHeaderPos == -1:
-		print_debug("ERROR: Bad File Format: ", f.get_path())
-		f.close()
-		return
-	
-#	#After getting header position run though each entry
-#	while not f.eof_reached():
-#		#TODO: Possible merge get_next_header with search entry to reduce entry scans
-#		nextHeaderPos = get_next_header(f, currentHeaderPos)
-#		if search_entry(f, currentHeaderPos, nextHeaderPos):
-#			print_to_output(f, currentHeaderPos, nextHeaderPos)
-#		if currentHeaderPos == nextHeaderPos:
-#			break
-#		currentHeaderPos = nextHeaderPos
-		
-	while not currentHeaderPos == nextHeaderPos:
-		if search_entry(f):
-			print_to_output(f)
-		
-		get_next_entry(f)
-		
-#		if currentHeaderPos == nextHeaderPos:
-#			break
-	
-#		currentHeaderPos = nextHeaderPos
-#		currentHeaderText = line
-		
-	f.close()
-
-
-func get_next_entry(f:File):
-	f.seek(nextHeaderPos)
-	line = f.get_line()
-	currentHeaderPos = nextHeaderPos
-	currentHeaderText = line
-	
 	#Scan though the rest of the file to find the next header
-	while f.get_position() < endOfFilePos:
+	while not f.eof_reached():
+#	while not f.eof_reached():
 		#Return the cursors position is the next header is found
 		if line.matchn(entryHeaderFormat) and not line.match(currentHeaderText):
 			nextHeaderPos = f.get_position() - line.length() - 2
 			return
-		line = f.get_line()
+		
+		print("cont to header")
+		set_line(f.get_line())
+#		line = f.get_line()
 	
 	#If all else fails just return the end of file position
 	nextHeaderPos = endOfFilePos
 	return
+
+
+#--------------Version 2
+
+#	print("FIRST: ", currentHeaderPos, " | CURR: ", f.get_position(), " | NEXT: ", nextHeaderPos)
+##	f.seek(nextHeaderPos)
+#	line = f.get_line()
+#	currentHeaderPos = nextHeaderPos
+#	currentHeaderText = line
+#
+#	#Scan though the rest of the file to find the next header
+#	while f.get_position() < endOfFilePos:
+#		#Return the cursors position is the next header is found
+#		if line.matchn(entryHeaderFormat) and not line.match(currentHeaderText):
+#			nextHeaderPos = f.get_position() - line.length() - 2
+#			return
+#		line = f.get_line()
+#
+#	#If all else fails just return the end of file position
+#	nextHeaderPos = endOfFilePos
+#	return
+
+#-------------- Version 1
 
 #Takes in a file and the current header and then iterates though the lines until the next header is found
 #Returns the next headers start position
@@ -198,6 +219,8 @@ func get_next_entry(f:File):
 func search_entry(f:File) -> bool:
 	EntryCountOutput.text = str(int(EntryCountOutput.text) + 1)
 	
+	var nextHeaderFound = false
+	
 	#Create an array to store whether or not a match has been found
 	var storedMatches:Array = []
 	for i in operationArray.size():
@@ -208,11 +231,13 @@ func search_entry(f:File) -> bool:
 	
 #	var line:String
 	f.seek(currentHeaderPos)
+#	line = f.get_line()
+	set_line("Search Start")
+	set_line(f.get_line())
 	
 	#For every line check every term
-	while f.get_position() < nextHeaderPos:
-		line = f.get_line()
-
+	while nextHeaderFound == false:
+		
 		for i in operationArray.size():
 			if storedMatches[i] != true or operationArray[i] == "NOT": #Shortcircut if term has already been met
 				match operationArray[i]:
@@ -230,6 +255,14 @@ func search_entry(f:File) -> bool:
 								storedMatches[i] = true
 					_:
 						print_debug("ERROR: Invalid Operation in operationArray")
+		
+#		line = f.get_line()
+		print("Search Loop")
+		set_line(f.get_line())
+		
+		#If the next header, or end of file, is found stop the loop
+		if (line.matchn(entryHeaderFormat) and not line.match(currentHeaderText)) or f.eof_reached():
+			nextHeaderFound = true
 	
 	#Depending on if all terms have been met output a boolean
 	for i in storedMatches.size():
@@ -262,7 +295,9 @@ func print_to_output(f:File):
 	
 	while f.get_position() < nextHeaderPos:
 		
-		line = f.get_line()
+#		line = f.get_line()
+		print("output")
+		set_line(f.get_line())
 		
 		match get_print_option():
 			0: #Full
@@ -383,7 +418,11 @@ func generate_rand_date() -> String:
 	var output = str(randomDate.month) + "/" + str(randomDate.day) + "/" + str(randomDate.year)
 	return output
 
-#============================ Getters
+#============================ Getters and Setters
+
+func set_line(value):
+	line = value
+	print(line)
 
 func get_print_option() -> int:
 	return(printOption)
