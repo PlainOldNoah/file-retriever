@@ -2,7 +2,7 @@
 
 [ext_resource path="res://Main.gd" type="Script" id=1]
 
-[sub_resource type="ButtonGroup" id=1]
+[sub_resource type="ButtonGroup" id=5]
 
 [sub_resource type="InputEventAction" id=2]
 action = "ui_accept"
@@ -15,7 +15,7 @@ shortcut = SubResource( 2 )
 [node name="PanelContainer" type="PanelContainer"]
 anchor_right = 1.0
 anchor_bottom = 1.0
-rect_min_size = Vector2( 0, 700 )
+rect_min_size = Vector2( 0, 710 )
 size_flags_horizontal = 3
 size_flags_vertical = 3
 script = ExtResource( 1 )
@@ -27,7 +27,7 @@ __meta__ = {
 margin_left = 7.0
 margin_top = 7.0
 margin_right = 993.0
-margin_bottom = 693.0
+margin_bottom = 703.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 custom_constants/margin_right = 8
@@ -42,11 +42,11 @@ __meta__ = {
 margin_left = 8.0
 margin_top = 8.0
 margin_right = 978.0
-margin_bottom = 678.0
+margin_bottom = 688.0
 
 [node name="GUI" type="VBoxContainer" parent="MarginContainer/HBoxContainer"]
 margin_right = 400.0
-margin_bottom = 670.0
+margin_bottom = 680.0
 rect_min_size = Vector2( 0, 30 )
 custom_constants/separation = 10
 __meta__ = {
@@ -57,7 +57,7 @@ __meta__ = {
 margin_right = 400.0
 margin_bottom = 14.0
 size_flags_vertical = 1
-text = "  Entry Retriever (v.1.0.0)"
+text = "  Entry Retriever (v.2.0.0)"
 valign = 1
 
 [node name="FileSelection" type="VBoxContainer" parent="MarginContainer/HBoxContainer/GUI"]
@@ -71,8 +71,7 @@ custom_constants/separation = 10
 margin_right = 400.0
 margin_bottom = 30.0
 rect_min_size = Vector2( 400, 30 )
-text = "C:/Users/Noah/Library/Entires/EntrieverTestFiles/TestFile3.txt"
-clear_button_enabled = true
+text = "C:\\Users\\Noah\\Library\\Entires\\"
 placeholder_text = "Select a File or Directory to Scan Though"
 caret_blink = true
 caret_blink_speed = 0.5
@@ -90,7 +89,7 @@ margin_right = 126.0
 margin_bottom = 30.0
 rect_min_size = Vector2( 0, 30 )
 size_flags_horizontal = 3
-text = "Select File"
+text = "Select Folder"
 
 [node name="FilesSelect" type="Button" parent="MarginContainer/HBoxContainer/GUI/FileSelection/FileSelectButtons"]
 margin_left = 136.0
@@ -98,7 +97,7 @@ margin_right = 262.0
 margin_bottom = 30.0
 rect_min_size = Vector2( 0, 30 )
 size_flags_horizontal = 3
-text = "Select Files"
+text = "Select File(s)"
 
 [node name="FromOutput" type="CheckBox" parent="MarginContainer/HBoxContainer/GUI/FileSelection/FileSelectButtons"]
 margin_left = 272.0
@@ -190,36 +189,45 @@ __meta__ = {
 }
 
 [node name="PrintEntry" type="CheckBox" parent="MarginContainer/HBoxContainer/GUI/RunButtons/OutputButtons"]
-margin_right = 126.0
+margin_right = 93.0
 margin_bottom = 30.0
 rect_min_size = Vector2( 0, 30 )
 size_flags_horizontal = 3
 custom_constants/hseparation = 10
 pressed = true
-group = SubResource( 1 )
+group = SubResource( 5 )
 text = "Full Entry"
 
 [node name="PrintDate" type="CheckBox" parent="MarginContainer/HBoxContainer/GUI/RunButtons/OutputButtons"]
-margin_left = 136.0
-margin_right = 262.0
+margin_left = 103.0
+margin_right = 201.0
 margin_bottom = 30.0
 rect_min_size = Vector2( 0, 30 )
 size_flags_horizontal = 3
 custom_constants/hseparation = 10
-group = SubResource( 1 )
+group = SubResource( 5 )
 text = "Date Only"
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
 [node name="PrintLine" type="CheckBox" parent="MarginContainer/HBoxContainer/GUI/RunButtons/OutputButtons"]
-margin_left = 272.0
+margin_left = 211.0
+margin_right = 300.0
+margin_bottom = 30.0
+rect_min_size = Vector2( 0, 30 )
+size_flags_horizontal = 3
+group = SubResource( 5 )
+text = "Line Only"
+
+[node name="PrintNone" type="CheckBox" parent="MarginContainer/HBoxContainer/GUI/RunButtons/OutputButtons"]
+margin_left = 310.0
 margin_right = 400.0
 margin_bottom = 30.0
 rect_min_size = Vector2( 0, 30 )
 size_flags_horizontal = 3
-group = SubResource( 1 )
-text = "Line Only"
+group = SubResource( 5 )
+text = "No Print"
 
 [node name="Run" type="Button" parent="MarginContainer/HBoxContainer/GUI/RunButtons"]
 margin_top = 34.0
@@ -239,7 +247,7 @@ custom_constants/separation = 10
 [node name="Statistics" type="PanelContainer" parent="MarginContainer/HBoxContainer/GUI"]
 margin_top = 358.0
 margin_right = 400.0
-margin_bottom = 504.0
+margin_bottom = 538.0
 rect_min_size = Vector2( 0, 30 )
 size_flags_horizontal = 7
 
@@ -247,13 +255,13 @@ size_flags_horizontal = 7
 margin_left = 7.0
 margin_top = 7.0
 margin_right = 393.0
-margin_bottom = 139.0
+margin_bottom = 173.0
 rect_min_size = Vector2( 0, 30 )
 custom_constants/separation = 10
 
 [node name="DataNames" type="VBoxContainer" parent="MarginContainer/HBoxContainer/GUI/Statistics/HBoxContainer"]
 margin_right = 117.0
-margin_bottom = 132.0
+margin_bottom = 166.0
 rect_min_size = Vector2( 0, 30 )
 size_flags_stretch_ratio = 0.6
 
@@ -266,10 +274,20 @@ text = "Files Scanned: "
 align = 2
 valign = 1
 
-[node name="EntriesLabel" type="Label" parent="MarginContainer/HBoxContainer/GUI/Statistics/HBoxContainer/DataNames"]
+[node name="BytesLabel" type="Label" parent="MarginContainer/HBoxContainer/GUI/Statistics/HBoxContainer/DataNames"]
 margin_top = 34.0
 margin_right = 117.0
 margin_bottom = 64.0
+rect_min_size = Vector2( 0, 30 )
+size_flags_vertical = 1
+text = "Bytes Scanned: "
+align = 2
+valign = 1
+
+[node name="EntriesLabel" type="Label" parent="MarginContainer/HBoxContainer/GUI/Statistics/HBoxContainer/DataNames"]
+margin_top = 68.0
+margin_right = 117.0
+margin_bottom = 98.0
 rect_min_size = Vector2( 0, 30 )
 size_flags_vertical = 1
 text = "Entires Scanned: "
@@ -277,9 +295,9 @@ align = 2
 valign = 1
 
 [node name="MatchesLabel" type="Label" parent="MarginContainer/HBoxContainer/GUI/Statistics/HBoxContainer/DataNames"]
-margin_top = 68.0
+margin_top = 102.0
 margin_right = 117.0
-margin_bottom = 98.0
+margin_bottom = 132.0
 rect_min_size = Vector2( 0, 30 )
 size_flags_vertical = 1
 text = "Retrieved Entries: "
@@ -287,9 +305,9 @@ align = 2
 valign = 1
 
 [node name="TimeLabel" type="Label" parent="MarginContainer/HBoxContainer/GUI/Statistics/HBoxContainer/DataNames"]
-margin_top = 102.0
+margin_top = 136.0
 margin_right = 117.0
-margin_bottom = 132.0
+margin_bottom = 166.0
 rect_min_size = Vector2( 0, 30 )
 size_flags_vertical = 1
 text = "Search Time: "
@@ -299,7 +317,7 @@ valign = 1
 [node name="DataValues" type="VBoxContainer" parent="MarginContainer/HBoxContainer/GUI/Statistics/HBoxContainer"]
 margin_left = 127.0
 margin_right = 135.0
-margin_bottom = 132.0
+margin_bottom = 166.0
 rect_min_size = Vector2( 0, 30 )
 
 [node name="FileCount" type="Label" parent="MarginContainer/HBoxContainer/GUI/Statistics/HBoxContainer/DataValues"]
@@ -310,7 +328,7 @@ size_flags_vertical = 1
 text = "0"
 valign = 1
 
-[node name="EntryCount" type="Label" parent="MarginContainer/HBoxContainer/GUI/Statistics/HBoxContainer/DataValues"]
+[node name="BytesCount" type="Label" parent="MarginContainer/HBoxContainer/GUI/Statistics/HBoxContainer/DataValues"]
 margin_top = 34.0
 margin_right = 8.0
 margin_bottom = 64.0
@@ -319,7 +337,7 @@ size_flags_vertical = 1
 text = "0"
 valign = 1
 
-[node name="MatchCount" type="Label" parent="MarginContainer/HBoxContainer/GUI/Statistics/HBoxContainer/DataValues"]
+[node name="EntryCount" type="Label" parent="MarginContainer/HBoxContainer/GUI/Statistics/HBoxContainer/DataValues"]
 margin_top = 68.0
 margin_right = 8.0
 margin_bottom = 98.0
@@ -328,7 +346,7 @@ size_flags_vertical = 1
 text = "0"
 valign = 1
 
-[node name="ElapsedTime" type="Label" parent="MarginContainer/HBoxContainer/GUI/Statistics/HBoxContainer/DataValues"]
+[node name="MatchCount" type="Label" parent="MarginContainer/HBoxContainer/GUI/Statistics/HBoxContainer/DataValues"]
 margin_top = 102.0
 margin_right = 8.0
 margin_bottom = 132.0
@@ -337,10 +355,19 @@ size_flags_vertical = 1
 text = "0"
 valign = 1
 
+[node name="ElapsedTime" type="Label" parent="MarginContainer/HBoxContainer/GUI/Statistics/HBoxContainer/DataValues"]
+margin_top = 136.0
+margin_right = 8.0
+margin_bottom = 166.0
+rect_min_size = Vector2( 0, 30 )
+size_flags_vertical = 1
+text = "0"
+valign = 1
+
 [node name="LowerControl" type="VBoxContainer" parent="MarginContainer/HBoxContainer/GUI"]
-margin_top = 538.0
+margin_top = 548.0
 margin_right = 400.0
-margin_bottom = 670.0
+margin_bottom = 680.0
 size_flags_vertical = 10
 custom_constants/separation = 10
 
@@ -437,65 +464,71 @@ __meta__ = {
 [node name="VSeparator" type="VSeparator" parent="MarginContainer/HBoxContainer"]
 margin_left = 404.0
 margin_right = 414.0
-margin_bottom = 670.0
+margin_bottom = 680.0
 custom_constants/separation = 10
 
 [node name="OutputWindow" type="PanelContainer" parent="MarginContainer/HBoxContainer"]
 self_modulate = Color( 0.721569, 0.721569, 0.721569, 1 )
 margin_left = 418.0
 margin_right = 970.0
-margin_bottom = 670.0
+margin_bottom = 680.0
 size_flags_horizontal = 3
 
 [node name="TextBox" type="RichTextLabel" parent="MarginContainer/HBoxContainer/OutputWindow"]
 margin_left = 7.0
 margin_top = 7.0
 margin_right = 545.0
-margin_bottom = 663.0
+margin_bottom = 673.0
 focus_mode = 2
-custom_constants/line_separation = 2
+custom_constants/line_separation = 3
 bbcode_enabled = true
 selection_enabled = true
 
-[node name="SingleInputFileDialog" type="FileDialog" parent="."]
-margin_left = 200.0
-margin_top = 175.0
-margin_right = 800.0
-margin_bottom = 525.0
-rect_min_size = Vector2( 600, 350 )
-rect_clip_content = true
+[node name="CenterContainer" type="CenterContainer" parent="."]
+visible = false
+margin_left = 7.0
+margin_top = 7.0
+margin_right = 993.0
+margin_bottom = 693.0
+mouse_filter = 2
+
+[node name="InputFileDialog" type="FileDialog" parent="CenterContainer"]
+margin_left = 167.0
+margin_top = 92.0
+margin_right = 817.0
+margin_bottom = 592.0
+rect_min_size = Vector2( 650, 500 )
 size_flags_horizontal = 4
 size_flags_vertical = 4
 popup_exclusive = true
+window_title = "Select a File"
 resizable = true
 mode_overrides_title = false
 mode = 3
 access = 2
 filters = PoolStringArray( "*.txt ; Text Files" )
-current_dir = "/Main_Hub/Game Dev/Projects/GitEntryRetriever/EntryRetriever"
-current_path = "/Main_Hub/Game Dev/Projects/GitEntryRetriever/EntryRetriever/"
+current_dir = "/Users/Noah/Library/Entires"
+current_path = "/Users/Noah/Library/Entires/"
 
-[node name="OutputFileConfirmation" type="ConfirmationDialog" parent="."]
-margin_left = 300.0
-margin_top = 316.0
-margin_right = 700.0
-margin_bottom = 384.0
-rect_min_size = Vector2( 400, 0 )
+[node name="OutputFileConfirmation" type="ConfirmationDialog" parent="CenterContainer"]
+margin_left = 293.0
+margin_top = 308.0
+margin_right = 693.0
+margin_bottom = 378.0
+rect_min_size = Vector2( 400, 70 )
 rect_clip_content = true
-size_flags_horizontal = 4
-size_flags_vertical = 4
 popup_exclusive = true
 window_title = ""
 
-[node name="LineEdit" type="LineEdit" parent="OutputFileConfirmation"]
+[node name="LineEdit" type="LineEdit" parent="CenterContainer/OutputFileConfirmation"]
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 margin_left = -192.0
-margin_top = -26.0
+margin_top = -27.0
 margin_right = 192.0
-margin_bottom = -2.0
+margin_bottom = -1.0
 size_flags_horizontal = 0
 size_flags_vertical = 0
 align = 1
@@ -504,20 +537,185 @@ placeholder_text = "Enter Output Filename"
 __meta__ = {
 "_edit_use_anchors_": false
 }
-[connection signal="pressed" from="MarginContainer/HBoxContainer/GUI/FileSelection/FileSelectButtons/FileSelect" to="." method="_on_FileSelect_pressed"]
+
+[node name="WarningPopup" type="ConfirmationDialog" parent="CenterContainer"]
+margin_left = 193.0
+margin_top = 314.0
+margin_right = 793.0
+margin_bottom = 372.0
+rect_min_size = Vector2( 600, 0 )
+rect_clip_content = true
+size_flags_horizontal = 0
+size_flags_vertical = 0
+popup_exclusive = true
+window_title = ""
+
+[node name="PanelContainer" type="PanelContainer" parent="CenterContainer/WarningPopup"]
+self_modulate = Color( 0.721569, 0.721569, 0.721569, 1 )
+margin_left = 8.0
+margin_top = 8.0
+margin_right = 592.0
+margin_bottom = 22.0
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="RichTextLabel" type="RichTextLabel" parent="CenterContainer/WarningPopup/PanelContainer"]
+margin_left = 7.0
+margin_top = 7.0
+margin_right = 577.0
+margin_bottom = 58.0
+custom_constants/line_separation = 3
+bbcode_enabled = true
+bbcode_text = "[center]WARNING
+The search you are about to do could take very long time.
+Are you sure you would like to proceed?[/center]"
+text = "WARNING
+The search you are about to do could take very long time.
+Are you sure you would like to proceed?"
+fit_content_height = true
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="SearchMemoryPopup" type="ConfirmationDialog" parent="CenterContainer"]
+margin_left = 293.0
+margin_top = 314.0
+margin_right = 693.0
+margin_bottom = 372.0
+rect_min_size = Vector2( 400, 0 )
+rect_clip_content = true
+popup_exclusive = true
+window_title = ""
+__meta__ = {
+"_editor_description_": ""
+}
+
+[node name="PanelContainer" type="PanelContainer" parent="CenterContainer/SearchMemoryPopup"]
+self_modulate = Color( 0.721569, 0.721569, 0.721569, 1 )
+margin_left = 8.0
+margin_top = 8.0
+margin_right = 392.0
+margin_bottom = 22.0
+
+[node name="RichTextLabel" type="RichTextLabel" parent="CenterContainer/SearchMemoryPopup/PanelContainer"]
+margin_left = 7.0
+margin_top = 7.0
+margin_right = 377.0
+margin_bottom = 22.0
+fit_content_height = true
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="HelpPopup" type="AcceptDialog" parent="CenterContainer"]
+margin_left = 193.0
+margin_top = 314.0
+margin_right = 793.0
+margin_bottom = 372.0
+rect_min_size = Vector2( 600, 0 )
+rect_clip_content = true
+size_flags_horizontal = 0
+size_flags_vertical = 0
+popup_exclusive = true
+window_title = ""
+
+[node name="PanelContainer" type="PanelContainer" parent="CenterContainer/HelpPopup"]
+self_modulate = Color( 0.721569, 0.721569, 0.721569, 1 )
+margin_left = 8.0
+margin_top = 8.0
+margin_right = 592.0
+margin_bottom = 22.0
+
+[node name="RichTextLabel" type="RichTextLabel" parent="CenterContainer/HelpPopup/PanelContainer"]
+margin_left = 7.0
+margin_top = 7.0
+margin_right = 577.0
+margin_bottom = 551.0
+custom_constants/line_separation = 3
+bbcode_enabled = true
+bbcode_text = "[u]Input Selection[/u]
+[Select File] - Opens a file dialog to select 1 file or directory
+[Select Files] - Opens a file dialog to select multiple files (not directories)
+[From Output] - Run the search on the current text in the output instead of a file
+
+[u]Search Keywords[/u]
+>Operators
+	- ( , ) is used to seperate terms and acts as an AND keyword
+	- (OR) is is true if at least one sub-term returns true
+	- ( - ) excludes a term and intantly returns false if the term comes up
+>Operator Examples
+	- {a, b, c} = returns true if a, b, and c are all present
+	- {a or b} = returns true if a or b are present
+	- {-a}        = returns true if a is not present
+>Buttons
+	[Random Date] - Generates a random date from 1/1/17 to the present
+	[Today's Date] - Inputs today's date into the search key input as \"mm/dd/\"
+	Shift + [Today's Date] - Inputs today's date from each year since 2017
+		(Creates a more narrow search but takes longer to run)
+	[Case Sensitive] - Determines if search keys should be used as-is
+
+[u]Running and Output[/u]
+>Buttons
+	[Full Entry]   - Prints out the entire entry of retrieved entries
+	[Date Only]  - Prints out only the date of retrieved entries
+	[Line Only]   - Prints out the date and matching line of retrieved entries
+	[No Output] - Does not print out anything to output
+
+	[Reset] - Resets search data
+	Shift + [Reset] - Restarts the program
+	[Quit] - Closes the program
+	[Help] - You pressed that to get here"
+text = "Input Selection
+[Select File] - Opens a file dialog to select 1 file or directory
+[Select Files] - Opens a file dialog to select multiple files (not directories)
+[From Output] - Run the search on the current text in the output instead of a file
+
+Search Keywords
+>Operators
+	- ( , ) is used to seperate terms and acts as an AND keyword
+	- (OR) is is true if at least one sub-term returns true
+	- ( - ) excludes a term and intantly returns false if the term comes up
+>Operator Examples
+	- {a, b, c} = returns true if a, b, and c are all present
+	- {a or b} = returns true if a or b are present
+	- {-a}        = returns true if a is not present
+>Buttons
+	[Random Date] - Generates a random date from 1/1/17 to the present
+	[Today's Date] - Inputs today's date into the search key input as \"mm/dd/\"
+	Shift + [Today's Date] - Inputs today's date from each year since 2017
+		(Creates a more narrow search but takes longer to run)
+	[Case Sensitive] - Determines if search keys should be used as-is
+
+Running and Output
+>Buttons
+	[Full Entry]   - Prints out the entire entry of retrieved entries
+	[Date Only]  - Prints out only the date of retrieved entries
+	[Line Only]   - Prints out the date and matching line of retrieved entries
+	[No Output] - Does not print out anything to output
+
+	[Reset] - Resets search data
+	Shift + [Reset] - Restarts the program
+	[Quit] - Closes the program
+	[Help] - You pressed that to get here"
+fit_content_height = true
+__meta__ = {
+"_edit_use_anchors_": false
+}
+[connection signal="pressed" from="MarginContainer/HBoxContainer/GUI/FileSelection/FileSelectButtons/FileSelect" to="." method="_on_DirectorySelect_pressed"]
 [connection signal="pressed" from="MarginContainer/HBoxContainer/GUI/FileSelection/FileSelectButtons/FilesSelect" to="." method="_on_FilesSelect_pressed"]
 [connection signal="toggled" from="MarginContainer/HBoxContainer/GUI/FileSelection/FileSelectButtons/FromOutput" to="." method="_on_FromOutput_toggled"]
-[connection signal="text_changed" from="MarginContainer/HBoxContainer/GUI/SearchKey/SearchKeyInput" to="." method="_on_Search_Keys_text_changed"]
 [connection signal="pressed" from="MarginContainer/HBoxContainer/GUI/SearchKey/SearchKeyButtons/RandomDate" to="." method="_on_RandomDate_pressed"]
 [connection signal="pressed" from="MarginContainer/HBoxContainer/GUI/SearchKey/SearchKeyButtons/TodaysDate" to="." method="_on_TodaysDate_pressed"]
 [connection signal="pressed" from="MarginContainer/HBoxContainer/GUI/RunButtons/OutputButtons/PrintEntry" to="." method="_on_PrintEntry_pressed"]
 [connection signal="pressed" from="MarginContainer/HBoxContainer/GUI/RunButtons/OutputButtons/PrintDate" to="." method="_on_PrintDate_pressed"]
 [connection signal="pressed" from="MarginContainer/HBoxContainer/GUI/RunButtons/OutputButtons/PrintLine" to="." method="_on_PrintLine_pressed"]
+[connection signal="pressed" from="MarginContainer/HBoxContainer/GUI/RunButtons/OutputButtons/PrintNone" to="." method="_on_PrintNone_pressed"]
 [connection signal="pressed" from="MarginContainer/HBoxContainer/GUI/RunButtons/Run" to="." method="_on_Run_pressed"]
 [connection signal="pressed" from="MarginContainer/HBoxContainer/GUI/LowerControl/ExportControls/VBoxContainer/ExportBtn" to="." method="_on_ExportBtn_pressed"]
 [connection signal="pressed" from="MarginContainer/HBoxContainer/GUI/LowerControl/FinalButtons/HBoxContainer/Clear" to="." method="_on_Clear_pressed"]
 [connection signal="pressed" from="MarginContainer/HBoxContainer/GUI/LowerControl/FinalButtons/HBoxContainer/Quit" to="." method="_on_Quit_pressed"]
 [connection signal="pressed" from="MarginContainer/HBoxContainer/GUI/LowerControl/FinalButtons/HBoxContainer/Help" to="." method="_on_Help_pressed"]
-[connection signal="dir_selected" from="SingleInputFileDialog" to="." method="_on_SingleInputFileDialog_dir_selected"]
-[connection signal="file_selected" from="SingleInputFileDialog" to="." method="_on_SingleInputFileDialog_file_selected"]
-[connection signal="confirmed" from="OutputFileConfirmation" to="." method="_on_OutputFileConfirmation_confirmed"]
+[connection signal="dir_selected" from="CenterContainer/InputFileDialog" to="." method="_on_InputFileDialog_dir_selected"]
+[connection signal="files_selected" from="CenterContainer/InputFileDialog" to="." method="_on_InputFileDialog_files_selected"]
+[connection signal="confirmed" from="CenterContainer/OutputFileConfirmation" to="." method="_on_OutputFileConfirmation_confirmed"]
