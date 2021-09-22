@@ -21,80 +21,78 @@ var allTermsArray : PoolStringArray = [] #Stores every term, used in printing to
 
 #Misc variables
 var estimatedTotalDays: int = 0
-var currentFileSize:int = 0
-var totalFileSize:int = 0
+var currentFileSize:int = 0 #Total bytes to scan though
+var totalFileSize:int = 0   #Bytes scanned during read
 
 var inputPath:PoolStringArray = [] #Files and directorys stored here for later searching
-#Different types of input affect how program runs
-#enum INPUT_TYPES {DIRECTORY, FILE, FILES}
-#var inputType
 
 enum printOptions {FULL, DATE, MATCHEDLINE, NONE}
-export (printOptions) var printOption = printOptions.FULL
+export (printOptions) var printOption = printOptions.NONE
 
 var rng = RandomNumberGenerator.new()
 
 #---------------------------- NODES
 onready var HelpPopup =         $CenterContainer/HelpPopup
-onready var WarningPopup =      $CenterContainer/WarningPopup
 onready var SearchMemoryPopup = $CenterContainer/SearchMemoryPopup
 onready var InputFileDialog =   $CenterContainer/InputFileDialog
 onready var OutputFileConfirm = $CenterContainer/OutputFileConfirmation
 onready var OutputFileName =    $CenterContainer/OutputFileConfirmation/LineEdit
 
-onready var OutputWindow =      $MarginContainer/HBoxContainer/OutputWindow
-onready var OutputTextBox =     $MarginContainer/HBoxContainer/OutputWindow/TextBox
+onready var WarningPopup =      $CenterContainer/WarningPopup
+onready var WarningConfirm =    WarningPopup.get_node("HBoxContainer/WarningConfim")
+onready var WarningAbort =      WarningPopup.get_node("HBoxContainer/WarningAbort")
 
-onready var StatusBarOutput =   $MarginContainer/HBoxContainer/GUI/StatusBar
+onready var OutputWindow =      $MarginContainer/HBoxContainer/OutputWindow
+onready var OutputTextBox =     OutputWindow.get_node("TextBox")
+
+onready var StatusBar =         $MarginContainer/HBoxContainer/GUI/StatusBar
 onready var SelectionInput =    $MarginContainer/HBoxContainer/GUI/FileSelection/SelectionInput
-onready var AppendButton =      $MarginContainer/HBoxContainer/GUI/LowerControl/ExportControls/VBoxContainer/ExportModeButton/Append
+onready var AppendButton =      $MarginContainer/HBoxContainer/GUI/TabContainer/Export/ExportModeButton/Append
 
 onready var SearchKeyInput =    $MarginContainer/HBoxContainer/GUI/SearchKey/SearchKeyInput
 onready var CaseSenseToggle =   $MarginContainer/HBoxContainer/GUI/SearchKey/SearchKeyButtons/CaseSensitive
 
-onready var DataVales =         $MarginContainer/HBoxContainer/GUI/Statistics/HBoxContainer/DataValues
-onready var FileCountOutput =   DataVales.get_node("FileCount")
-onready var EntryCountOutput =  DataVales.get_node("EntryCount")
-onready var MatchCountOutput =  DataVales.get_node("MatchCount")
-onready var ElapsedTimeOutput = DataVales.get_node("ElapsedTime")
-onready var BytesCountOutput =  DataVales.get_node("BytesCount")
+onready var Tab_Container =     $MarginContainer/HBoxContainer/GUI/TabContainer
+
+onready var Statistics =        Tab_Container.get_node("Statistics")
+onready var FileCountOutput =   Statistics.get_node("LeftData/TotalFiles/FileCount")
+onready var EntryCountOutput =  Statistics.get_node("LeftData/TotalEntries/EntryCount")
+onready var ElapsedTimeOutput = Statistics.get_node("LeftData/SearchTime/ElapsedTime")
+onready var MatchCountOutput =  Statistics.get_node("RightData/RetrievedEntires/MatchCount")
+onready var BytesCountOutput =  Statistics.get_node("RightData/TotalBytes/BytesCount")
+
+onready var KeywordHistory =    Tab_Container.get_node("History/TextEdit")
 
 #============================ Functions
-
+#---------------------------- GODOT FUNCS
 func _ready():
 	OS.set_window_position(OS.get_screen_size()*0.5 - OS.get_window_size()*0.5)
 	rng.randomize()
 	inputPath.append(SelectionInput.text)
 	set_selection_input()
+	reset_statistics()
 
 func _unhandled_input(event):
 	#Removes focus from any other control node to allow ui_accept to press the 'run' button
 	if event.is_action_pressed("ui_accept") and get_focus_owner() != null:
 		get_focus_owner().release_focus()
 
-#Resets output/search data
-func reset_statistics():
-	FileCountOutput.text = "0"
-	EntryCountOutput.text = "0"
-	MatchCountOutput.text = "0"
-	ElapsedTimeOutput.text = "0"
-	StatusBarOutput.text = "Idle"
-	OutputTextBox.bbcode_text = ""
-	currentFileSize = 0
-	totalFileSize = 0
+#---------------------------- CORE FEATURE FUNCS
 
-#Main function for running the search
-func run_program():
+#First half of runner, initializes 'things' and gets bytes
+func run_program_start():
 	#Initializing
 	reset_statistics()
 	parse_search_keys()
 	prepare_search_terms()
 	set_selection_input() #Even if fileInput is cleared, there are still directorys saved
 	
-	print("STARTING...")
+	store_keyword_history()
 	
-	StatusBarOutput.text = "Running"
-	yield(get_tree().create_timer(0.02), "timeout")
+	print("\nStarting...")
+	
+	set_status_bar("Initializing")
+	yield(get_tree(), "idle_frame")
 	
 	#Get total file size before seaching
 	for i in inputPath.size():
@@ -106,6 +104,35 @@ func run_program():
 	BytesCountOutput.text = str(totalFileSize)
 	
 	#WARNING GOES HERE
+	if not warning(totalFileSize):
+		run_program_continue()
+
+#Compares input bytes to print mode to determine if program is too long
+#RETURN: bool of if warning is needed or not
+func warning(size:int) -> bool:
+	var dangerousSize:int = 0
+	
+	match printOption:
+		printOptions.FULL:
+			dangerousSize = 500000
+		printOptions.MATCHEDLINE:
+			dangerousSize = 1000000
+		printOptions.DATE:
+			dangerousSize = 15000000
+		printOptions.NONE:
+			dangerousSize = 35000000
+	
+	if size > dangerousSize:
+		WarningPopup.popup_centered()
+		set_status_bar("WARNING")
+		return true
+	return false
+
+#Second half of runner, actually does the search
+#Needed because of warning
+func run_program_continue():
+	set_status_bar("Running")
+	yield(get_tree(), "idle_frame")
 	
 	var startTime = OS.get_ticks_msec()
 	
@@ -120,14 +147,11 @@ func run_program():
 
 	if FileCountOutput.text == "0":
 #		reset_statistics()
-		StatusBarOutput.text = "ERROR: Bad File Path"
+		set_status_bar("ERROR: Bad File Path")
 	else:
-		StatusBarOutput.text = "Finished"
+		set_status_bar("Finished")
 
-#Gets the percent of current files over total files as a percent
-func progress_update(currentSize:int, totalSize:int):
-	var progress = int((float(currentSize) / totalSize) * 100.0)
-	print(progress, "%")
+#---------------------------- FILE READ/SEARCH/OUTPUT
 
 #Recursively loops though directories and retrieves files
 #Path:File path to directory to search
@@ -160,7 +184,7 @@ func read_file(file):
 	var f:File = File.new()
 	var _err = f.open(file, File.READ)
 	
-	initialize_file_read(f)
+	initialize_file_scan(f)
 	
 	#If the file doesn't have any headers or is formated wrong escape
 	if currentHeaderPos == -1:
@@ -180,12 +204,11 @@ func read_file(file):
 		currentHeaderText = line
 	
 	currentFileSize += f.get_len()
-	progress_update(currentFileSize, totalFileSize)
 	
 	f.close()
 
 #Gets the position of the End of the File, The First Header, The Second Header (If it exists)
-func initialize_file_read(f:File):
+func initialize_file_scan(f:File):
 	#Reset positions and lines of text
 	currentHeaderText = ""
 	line = ""
@@ -209,20 +232,6 @@ func initialize_file_read(f:File):
 	
 	#If there is no Next Header then set it to the end of the file
 	currentHeaderPos = -1
-	return
-
-#Scan though the rest of the file to find the next header
-func continue_to_next_header(f:File):
-	while not f.eof_reached():
-		#Return the cursors position is the next header is found
-		if line.matchn(entryHeaderFormat) and not line.match(currentHeaderText):
-			nextHeaderPos = f.get_position() - line.length() - 2
-			return
-		
-		set_line(f.get_line())
-	
-	#If all else fails just return the end of file position
-	nextHeaderPos = endOfFilePos
 	return
 
 #Runs though an entry line by line comparing it to the searchKeyArray
@@ -276,14 +285,19 @@ func search_entry(f:File) -> bool:
 			return false
 	return true
 
-#Summation of all files that need to be searched though
-#Return the size of the file
-func get_file_size(file) -> int:
-	var f:File = File.new()
-	var _err = f.open(file, File.READ)
-	var tempFileSize = f.get_len()
-	f.close()
-	return tempFileSize
+#Scan though the rest of the file to find the next header
+func continue_to_next_header(f:File):
+	while not f.eof_reached():
+		#Return the cursors position is the next header is found
+		if line.matchn(entryHeaderFormat) and not line.match(currentHeaderText):
+			nextHeaderPos = f.get_position() - line.length() - 2
+			return
+		
+		set_line(f.get_line())
+	
+	#If all else fails just return the end of file position
+	nextHeaderPos = endOfFilePos
+	return
 
 #Compares a line of text with a keyword
 #Returns bool depending on if term is contained within line
@@ -306,7 +320,6 @@ func print_to_output(f:File):
 #	print("END: ", f.get_position())
 	
 	f.seek(currentHeaderPos)
-#	var line:String = ""
 	
 	while f.get_position() < nextHeaderPos:
 		set_line(f.get_line())
@@ -326,16 +339,18 @@ func print_to_output(f:File):
 			2: #Matched Line
 				for i in allTermsArray.size():
 					if line.matchn(entryHeaderFormat):
-						if OutputTextBox.bbcode_text.empty():
-							OutputTextBox.bbcode_text += line + "\n"
-						else:
-							OutputTextBox.bbcode_text += "\n" + line + "\n"
-							
+						if not OutputTextBox.text.empty():
+							line = "\n" + line
+						OutputTextBox.bbcode_text += line + "\n"
+						break
 					elif find_match(line, allTermsArray[i]):
 						OutputTextBox.bbcode_text += line + "\n"
+						break
+				
 			3: #None
 				return
 
+#---------------------------- SEACH TERM FUNCS
 
 #Converts the user input to a poolStringArray
 func parse_search_keys():
@@ -390,6 +405,21 @@ func sort_search_keys():
 	searchKeyArray = tempSearchKeyArray
 	operationArray = tempOperationArray
 
+#---------------------------- MISC FUNCS
+#Summation of all files that need to be searched though
+#Return the size of the file
+func get_file_size(file) -> int:
+	var f:File = File.new()
+	var _err = f.open(file, File.READ)
+	var tempFileSize = f.get_len()
+	f.close()
+	return tempFileSize
+
+#Gets the percent of current files over total files as a percent
+func progress_update() -> int:
+	var progress = int((float(currentFileSize) / totalFileSize) * 100.0)
+	return progress
+
 #Makes sure the fileInputBox and fileDialog are in sync
 func set_selection_input():
 	if inputPath.size() == 1:
@@ -398,6 +428,17 @@ func set_selection_input():
 	else:
 		SelectionInput.text = "Multiple Files/Directories"
 		InputFileDialog.current_path = inputPath[inputPath.size() - 1]
+
+#Resets output/search data
+func reset_statistics():
+	FileCountOutput.text = "0"
+	EntryCountOutput.text = "0"
+	MatchCountOutput.text = "0"
+	ElapsedTimeOutput.text = "0"
+	set_status_bar("Idle")
+	OutputTextBox.bbcode_text = ""
+	currentFileSize = 0
+	totalFileSize = 0
 
 #Finds the number of days since 1/1/2017 and selects a random date
 #Then reverse engineer that value into a date:string that is returned
@@ -433,7 +474,15 @@ func generate_rand_date() -> String:
 	var output = str(randomDate.month) + "/" + str(randomDate.day) + "/" + str(randomDate.year)
 	return output
 
+func store_keyword_history():
+	if KeywordHistory.get_line(0) != SearchKeyInput.text and not SearchKeyInput.text.empty():
+		KeywordHistory.cursor_set_line(0)
+		KeywordHistory.insert_text_at_cursor(SearchKeyInput.text + "\n")
+
 #============================ Getters and Setters
+
+func set_status_bar(new_text:String):
+	StatusBar.text = new_text
 
 func set_line(value):
 	line = value
@@ -446,7 +495,7 @@ func get_print_option() -> int:
 
 #Starts the program
 func _on_Run_pressed():
-	run_program()
+	run_program_start()
 
 #File and Input Controls
 #Reusing File Dialog Popup
@@ -454,13 +503,13 @@ func _on_DirectorySelect_pressed():
 	InputFileDialog.mode = FileDialog.MODE_OPEN_DIR
 	InputFileDialog.window_title = "Select a Directory"
 	InputFileDialog.invalidate()
-	InputFileDialog.popup()
+	InputFileDialog.popup_centered()
 
 func _on_FilesSelect_pressed():
 	InputFileDialog.mode = FileDialog.MODE_OPEN_FILES
 	InputFileDialog.window_title = "Select File(s)"
 	InputFileDialog.invalidate()
-	InputFileDialog.popup()
+	InputFileDialog.popup_centered()
 
 #File Dialog Popup
 func _on_InputFileDialog_dir_selected(dir):
@@ -516,7 +565,15 @@ func _on_PrintNone_pressed():
 	printOption = printOptions.NONE
 
 
-
+#Control for Warning Popup, Stops on abort, continues on continue
+func _on_WarningConfim_pressed():
+	WarningPopup.hide()
+	yield(get_tree(), "idle_frame")
+	run_program_continue()
+	
+func _on_WarningAbort_pressed():
+	WarningPopup.hide()
+	set_status_bar("Search Aborted")
 
 
 func _on_OutputFileConfirmation_confirmed():
@@ -542,19 +599,19 @@ func _on_OutputFileConfirmation_confirmed():
 		fileStatus = 2
 
 	file.open(outputFilePath, fileStatus)
-	StatusBarOutput.text = "File Saved: " + OS.get_user_data_dir()
+	set_status_bar("File Saved: " + OS.get_user_data_dir())
 	file.store_string(OutputTextBox.bbcode_text)
 	file2Check.close()
 	file.close()
 
 #Exporting Text to File
 func _on_ExportBtn_pressed():
-	OutputFileConfirm.popup()
+	OutputFileConfirm.popup_centered()
 
 
 #Terminal Buttons that reset or end the program
 func _on_Help_pressed():
-	HelpPopup.popup()
+	HelpPopup.popup_centered()
 
 func _on_Clear_pressed():
 	if Input.is_key_pressed(KEY_SHIFT):
@@ -564,4 +621,6 @@ func _on_Clear_pressed():
 
 func _on_Quit_pressed():
 	get_tree().quit()
+
+
 
