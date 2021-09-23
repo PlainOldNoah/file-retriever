@@ -32,28 +32,28 @@ export (printOptions) var printOption = printOptions.NONE
 var rng = RandomNumberGenerator.new()
 
 #---------------------------- NODES
-onready var HelpPopup =         $CenterContainer/HelpPopup
-onready var SearchMemoryPopup = $CenterContainer/SearchMemoryPopup
-onready var InputFileDialog =   $CenterContainer/InputFileDialog
-onready var OutputFileConfirm = $CenterContainer/OutputFileConfirmation
-onready var OutputFileName =    $CenterContainer/OutputFileConfirmation/LineEdit
-
-onready var WarningPopup =      $CenterContainer/WarningPopup
+onready var PopupParent = $PopupParent
+onready var HelpPopup =         $PopupParent/HelpPopup
+onready var SearchMemoryPopup = $PopupParent/SearchMemoryPopup
+onready var InputFileDialog =   $PopupParent/InputFileDialog
+onready var OutputFileConfirm = $PopupParent/OutputFileConfirmation
+onready var OutputFileName =    OutputFileConfirm.get_node("LineEdit")
+onready var WarningPopup =      $PopupParent/WarningPopup
 onready var WarningConfirm =    WarningPopup.get_node("HBoxContainer/WarningConfim")
 onready var WarningAbort =      WarningPopup.get_node("HBoxContainer/WarningAbort")
 
 onready var OutputWindow =      $MarginContainer/HBoxContainer/OutputWindow
 onready var OutputTextBox =     OutputWindow.get_node("TextBox")
 
-onready var StatusBar =         $MarginContainer/HBoxContainer/GUI/StatusBar
-onready var SelectionInput =    $MarginContainer/HBoxContainer/GUI/FileSelection/SelectionInput
-onready var AppendButton =      $MarginContainer/HBoxContainer/GUI/TabContainer/Export/ExportModeButton/Append
+onready var Gui =               $MarginContainer/HBoxContainer/GUI
 
-onready var SearchKeyInput =    $MarginContainer/HBoxContainer/GUI/SearchKey/SearchKeyInput
-onready var CaseSenseToggle =   $MarginContainer/HBoxContainer/GUI/SearchKey/SearchKeyButtons/CaseSensitive
+onready var StatusBar =         Gui.get_node("StatusBar")
+onready var SearchKeyInput =    Gui.get_node("SearchKey/SearchKeyInput")
+onready var SelectionInput =    Gui.get_node("FileSelection/SelectionInput")
+onready var CaseSenseToggle =   Gui.get_node("SearchKey/SearchKeyButtons/CaseSensitive")
+onready var AppendButton =      Gui.get_node("TabContainer/Export/ExportModeButton/Append")
 
-onready var Tab_Container =     $MarginContainer/HBoxContainer/GUI/TabContainer
-
+onready var Tab_Container =     Gui.get_node("TabContainer")
 onready var Statistics =        Tab_Container.get_node("Statistics")
 onready var FileCountOutput =   Statistics.get_node("LeftData/TotalFiles/FileCount")
 onready var EntryCountOutput =  Statistics.get_node("LeftData/TotalEntries/EntryCount")
@@ -235,7 +235,7 @@ func initialize_file_scan(f:File):
 	return
 
 #Runs though an entry line by line comparing it to the searchKeyArray
-#Returns a bool based on the evaluation of the terms (Are all search terms true)
+#RETURN: a bool based on the evaluation of the terms (Are all search terms true)
 func search_entry(f:File) -> bool:
 	EntryCountOutput.text = str(int(EntryCountOutput.text) + 1)
 	
@@ -273,10 +273,13 @@ func search_entry(f:File) -> bool:
 					_:
 						print_debug("ERROR: Invalid Operation in operationArray")
 		
+		if f.eof_reached():
+			nextHeaderFound = true
+		
 		set_line(f.get_line())
 		
 		#If the next header, or end of file, is found stop the loop
-		if (line.matchn(entryHeaderFormat) and not line.match(currentHeaderText)) or f.eof_reached():
+		if (line.matchn(entryHeaderFormat) and not line.match(currentHeaderText)):# or f.eof_reached():
 			nextHeaderFound = true
 	
 	#Depending on if all terms have been met output a boolean
@@ -300,7 +303,7 @@ func continue_to_next_header(f:File):
 	return
 
 #Compares a line of text with a keyword
-#Returns bool depending on if term is contained within line
+#RETURN: bool depending on if term is contained within line
 func find_match(lineToCheck:String, term:String) -> bool:
 	if not CaseSenseToggle.pressed:
 		term = term.to_lower()
@@ -332,7 +335,6 @@ func print_to_output(f:File):
 				
 				#This adds a blank line between files if there wasn't one
 				if f.get_position() >= endOfFilePos and line != "":
-					print(line)
 					OutputTextBox.bbcode_text += "\n"
 			
 			1: #Date
@@ -350,9 +352,6 @@ func print_to_output(f:File):
 					elif find_match(line, allTermsArray[i]):
 						OutputTextBox.bbcode_text += line + "\n"
 						break
-#					elif line == "":
-#						OutputTextBox.bbcode_text += "LINE RETURN"
-#						break
 				
 			3: #None
 				return
@@ -374,7 +373,7 @@ func prepare_search_terms():
 	
 	#Passes in the operation of each term from the searchKeyArray into the operationArray
 	for i in searchKeyArray.size():
-		if "-" in searchKeyArray[i] or "NOT " in searchKeyArray[i].to_lower():
+		if "-" in searchKeyArray[i]:# or "NOT " in searchKeyArray[i].to_lower():
 			operationArray[i] = "NOT"
 			searchKeyArray[i] = searchKeyArray[i].replace("-", "")
 		elif " or " in searchKeyArray[i].to_lower():
@@ -414,7 +413,7 @@ func sort_search_keys():
 
 #---------------------------- MISC FUNCS
 #Summation of all files that need to be searched though
-#Return the size of the file
+#RETURN: the size of the file
 func get_file_size(file) -> int:
 	var f:File = File.new()
 	var _err = f.open(file, File.READ)
@@ -423,6 +422,7 @@ func get_file_size(file) -> int:
 	return tempFileSize
 
 #Gets the percent of current files over total files as a percent
+#RETURN: percentage of current bytes over total
 func progress_update() -> int:
 	var progress = int((float(currentFileSize) / totalFileSize) * 100.0)
 	return progress
@@ -449,6 +449,7 @@ func reset_statistics():
 
 #Finds the number of days since 1/1/2017 and selects a random date
 #Then reverse engineer that value into a date:string that is returned
+#RETURN: A random date
 func generate_rand_date() -> String:
 	var currentDate:Dictionary = OS.get_date()
 	var yearLength:float = 365.25
@@ -631,3 +632,12 @@ func _on_Quit_pressed():
 
 
 
+
+
+#TESTING: Set background to darker when popup is active
+
+func _on_HelpPopup_about_to_show():
+	$ScreenEffects/ColorRect.color = Color(0, 0, 0, 0.5)
+
+func _on_HelpPopup_popup_hide():
+	$ScreenEffects/ColorRect.color = Color(0, 0, 0, 0)
