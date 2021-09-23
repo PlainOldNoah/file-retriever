@@ -1,11 +1,11 @@
 extends PanelContainer
 
 #String formatting for consistancy
-var inputFolderFormat = "Logs - *"
-var inputFileFormat = "(??) * - *"
-var entryHeaderFormat = "*/*/*, *day"
-var startingDate = {"year":2017, "month":1, "day":1,}
-var defaultFilePath = "/Users/Noah/Library/Entires/"
+const inputFolderFormat = "Logs - *"
+const inputFileFormat = "(??) * - *"
+const entryHeaderFormat = "*/*/*, *day"
+const startingDate = {"year":2017, "month":1, "day":1,}
+const defaultFilePath = "/Users/Noah/Library/Entires/"
 
 #Variables for file/entry searching and printing
 var currentHeaderText:String = ""
@@ -315,21 +315,25 @@ func find_match(lineToCheck:String, term:String) -> bool:
 func print_to_output(f:File):
 	MatchCountOutput.text = str(int(MatchCountOutput.text) + 1)
 	
-#	TODO: Use this to get the end of a file to add a new line
-#	f.seek_end(0)
-#	print("END: ", f.get_position())
-	
 	f.seek(currentHeaderPos)
 	
 	while f.get_position() < nextHeaderPos:
+		
+		
 		set_line(f.get_line())
 		
 		match get_print_option():
 			0: #Full
 				for i in allTermsArray.size():
 					if find_match(line, allTermsArray[i]):
+						#TODO: Depending on operator change color
 						line = "[color=lime]" + line + "[/color]"
 				OutputTextBox.bbcode_text += line + "\n"
+				
+				#This adds a blank line between files if there wasn't one
+				if f.get_position() >= endOfFilePos and line != "":
+					print(line)
+					OutputTextBox.bbcode_text += "\n"
 			
 			1: #Date
 				if line.matchn(entryHeaderFormat):
@@ -346,6 +350,9 @@ func print_to_output(f:File):
 					elif find_match(line, allTermsArray[i]):
 						OutputTextBox.bbcode_text += line + "\n"
 						break
+#					elif line == "":
+#						OutputTextBox.bbcode_text += "LINE RETURN"
+#						break
 				
 			3: #None
 				return

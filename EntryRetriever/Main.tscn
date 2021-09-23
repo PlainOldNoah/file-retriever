@@ -71,7 +71,7 @@ custom_constants/separation = 10
 margin_right = 400.0
 margin_bottom = 30.0
 rect_min_size = Vector2( 400, 30 )
-text = "C:/Users/Noah/Library/Entires/EntrieverTestFiles/TestFile.txt"
+text = "C:/Users/Noah/Library/Entires/EntrieverTestFiles"
 placeholder_text = "Select a File or Directory to Scan Though"
 caret_blink = true
 caret_blink_speed = 0.5
@@ -210,24 +210,24 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="PrintEntry" type="CheckBox" parent="MarginContainer/HBoxContainer/GUI/RunButtons/OutputButtons"]
+[node name="PrintLine" type="CheckBox" parent="MarginContainer/HBoxContainer/GUI/RunButtons/OutputButtons"]
 margin_left = 207.0
-margin_right = 300.0
+margin_right = 296.0
+margin_bottom = 30.0
+rect_min_size = Vector2( 0, 30 )
+size_flags_horizontal = 3
+group = SubResource( 1 )
+text = "Line Only"
+
+[node name="PrintEntry" type="CheckBox" parent="MarginContainer/HBoxContainer/GUI/RunButtons/OutputButtons"]
+margin_left = 306.0
+margin_right = 399.0
 margin_bottom = 30.0
 rect_min_size = Vector2( 0, 30 )
 size_flags_horizontal = 3
 custom_constants/hseparation = 10
 group = SubResource( 1 )
 text = "Full Entry"
-
-[node name="PrintLine" type="CheckBox" parent="MarginContainer/HBoxContainer/GUI/RunButtons/OutputButtons"]
-margin_left = 310.0
-margin_right = 400.0
-margin_bottom = 30.0
-rect_min_size = Vector2( 0, 30 )
-size_flags_horizontal = 3
-group = SubResource( 1 )
-text = "Line Only"
 
 [node name="Run" type="Button" parent="MarginContainer/HBoxContainer/GUI/RunButtons"]
 margin_top = 34.0
@@ -536,6 +536,7 @@ bbcode_enabled = true
 selection_enabled = true
 
 [node name="CenterContainer" type="CenterContainer" parent="."]
+visible = false
 margin_left = 7.0
 margin_top = 7.0
 margin_right = 993.0
@@ -781,8 +782,8 @@ __meta__ = {
 [connection signal="pressed" from="MarginContainer/HBoxContainer/GUI/SearchKey/SearchKeyButtons/TodaysDate" to="." method="_on_TodaysDate_pressed"]
 [connection signal="pressed" from="MarginContainer/HBoxContainer/GUI/RunButtons/OutputButtons/PrintNone" to="." method="_on_PrintNone_pressed"]
 [connection signal="pressed" from="MarginContainer/HBoxContainer/GUI/RunButtons/OutputButtons/PrintDate" to="." method="_on_PrintDate_pressed"]
-[connection signal="pressed" from="MarginContainer/HBoxContainer/GUI/RunButtons/OutputButtons/PrintEntry" to="." method="_on_PrintEntry_pressed"]
 [connection signal="pressed" from="MarginContainer/HBoxContainer/GUI/RunButtons/OutputButtons/PrintLine" to="." method="_on_PrintLine_pressed"]
+[connection signal="pressed" from="MarginContainer/HBoxContainer/GUI/RunButtons/OutputButtons/PrintEntry" to="." method="_on_PrintEntry_pressed"]
 [connection signal="pressed" from="MarginContainer/HBoxContainer/GUI/RunButtons/Run" to="." method="_on_Run_pressed"]
 [connection signal="pressed" from="MarginContainer/HBoxContainer/GUI/TabContainer/Export/ExportBtn" to="." method="_on_ExportBtn_pressed"]
 [connection signal="pressed" from="MarginContainer/HBoxContainer/GUI/LowerControl/FinalButtons/HBoxContainer/Clear" to="." method="_on_Clear_pressed"]
