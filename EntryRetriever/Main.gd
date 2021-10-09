@@ -32,9 +32,8 @@ export (printOptions) var printOption = printOptions.NONE
 var rng = RandomNumberGenerator.new()
 
 #---------------------------- NODES
-onready var PopupParent = $PopupParent
+onready var PopupParent =       $PopupParent
 onready var HelpPopup =         $PopupParent/HelpPopup
-onready var SearchMemoryPopup = $PopupParent/SearchMemoryPopup
 onready var InputFileDialog =   $PopupParent/InputFileDialog
 onready var OutputFileConfirm = $PopupParent/OutputFileConfirmation
 onready var OutputFileName =    OutputFileConfirm.get_node("LineEdit")
@@ -452,6 +451,7 @@ func set_selection_input():
 	if inputPath.size() == 1:
 		SelectionInput.text = inputPath[0]
 	else:
+		sort_selection_input()
 		SelectionInput.text = str(dirInCount) + " Dirs, " + str(txtInCount) + " Files: "
 		
 		for i in inputPath.size():
@@ -459,6 +459,12 @@ func set_selection_input():
 	
 	InputFileDialog.current_dir = inputPath[inputPath.size() - 1]
 	InputFileDialog.current_path = inputPath[inputPath.size() - 1]
+
+#Converts inputPath PoolStringArray into an array to sort and then convert it back
+func sort_selection_input():
+	var tempArray:Array = inputPath
+	tempArray.sort()
+	inputPath = tempArray
 
 #Resets output/search data
 func reset_statistics():
@@ -555,7 +561,6 @@ func _on_InputFileDialog_files_selected(paths):
 		inputPath.resize(0)
 	inputPath.append_array(paths)
 	set_selection_input()
-	
 
 
 func _on_FromOutput_toggled(button_pressed):
@@ -654,14 +659,9 @@ func _on_Clear_pressed():
 func _on_Quit_pressed():
 	get_tree().quit()
 
-
-
-
-
-#TESTING: Set background to darker when popup is active
-
-func _on_HelpPopup_about_to_show():
+#Universal signal to handle popup background darken effect
+func _on_Popup_about_to_show():
 	$ScreenEffects/ColorRect.color = Color(0, 0, 0, 0.5)
 
-func _on_HelpPopup_popup_hide():
+func _on_Popup_popup_hide():
 	$ScreenEffects/ColorRect.color = Color(0, 0, 0, 0)

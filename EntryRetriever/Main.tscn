@@ -540,7 +540,6 @@ selection_enabled = true
 [node name="ScreenEffects" type="Node" parent="."]
 
 [node name="ColorRect" type="ColorRect" parent="ScreenEffects"]
-visible = false
 anchor_right = 1.0
 anchor_bottom = 1.0
 mouse_filter = 2
@@ -550,7 +549,6 @@ __meta__ = {
 }
 
 [node name="PopupParent" type="Control" parent="."]
-visible = false
 margin_left = 7.0
 margin_top = 7.0
 margin_right = 993.0
@@ -667,36 +665,6 @@ size_flags_horizontal = 6
 size_flags_vertical = 0
 text = "Abort"
 
-[node name="SearchMemoryPopup" type="ConfirmationDialog" parent="PopupParent"]
-margin_left = 293.0
-margin_top = 314.0
-margin_right = 693.0
-margin_bottom = 372.0
-rect_min_size = Vector2( 400, 0 )
-rect_clip_content = true
-popup_exclusive = true
-window_title = ""
-__meta__ = {
-"_editor_description_": ""
-}
-
-[node name="PanelContainer" type="PanelContainer" parent="PopupParent/SearchMemoryPopup"]
-self_modulate = Color( 0.721569, 0.721569, 0.721569, 1 )
-margin_left = 8.0
-margin_top = 8.0
-margin_right = 392.0
-margin_bottom = 22.0
-
-[node name="RichTextLabel" type="RichTextLabel" parent="PopupParent/SearchMemoryPopup/PanelContainer"]
-margin_left = 7.0
-margin_top = 7.0
-margin_right = 377.0
-margin_bottom = 22.0
-fit_content_height = true
-__meta__ = {
-"_edit_use_anchors_": false
-}
-
 [node name="HelpPopup" type="AcceptDialog" parent="PopupParent"]
 margin_left = 193.0
 margin_top = 314.0
@@ -803,10 +771,16 @@ __meta__ = {
 [connection signal="pressed" from="MarginContainer/HBoxContainer/GUI/LowerControl/FinalButtons/HBoxContainer/Clear" to="." method="_on_Clear_pressed"]
 [connection signal="pressed" from="MarginContainer/HBoxContainer/GUI/LowerControl/FinalButtons/HBoxContainer/Quit" to="." method="_on_Quit_pressed"]
 [connection signal="pressed" from="MarginContainer/HBoxContainer/GUI/LowerControl/FinalButtons/HBoxContainer/Help" to="." method="_on_Help_pressed"]
+[connection signal="about_to_show" from="PopupParent/InputFileDialog" to="." method="_on_Popup_about_to_show"]
 [connection signal="dir_selected" from="PopupParent/InputFileDialog" to="." method="_on_InputFileDialog_dir_selected"]
 [connection signal="files_selected" from="PopupParent/InputFileDialog" to="." method="_on_InputFileDialog_files_selected"]
+[connection signal="popup_hide" from="PopupParent/InputFileDialog" to="." method="_on_Popup_popup_hide"]
+[connection signal="about_to_show" from="PopupParent/OutputFileConfirmation" to="." method="_on_Popup_about_to_show"]
 [connection signal="confirmed" from="PopupParent/OutputFileConfirmation" to="." method="_on_OutputFileConfirmation_confirmed"]
+[connection signal="popup_hide" from="PopupParent/OutputFileConfirmation" to="." method="_on_Popup_popup_hide"]
+[connection signal="about_to_show" from="PopupParent/WarningPopup" to="." method="_on_Popup_about_to_show"]
+[connection signal="popup_hide" from="PopupParent/WarningPopup" to="." method="_on_Popup_popup_hide"]
 [connection signal="pressed" from="PopupParent/WarningPopup/HBoxContainer/WarningConfim" to="." method="_on_WarningConfim_pressed"]
 [connection signal="pressed" from="PopupParent/WarningPopup/HBoxContainer/WarningAbort" to="." method="_on_WarningAbort_pressed"]
-[connection signal="about_to_show" from="PopupParent/HelpPopup" to="." method="_on_HelpPopup_about_to_show"]
-[connection signal="popup_hide" from="PopupParent/HelpPopup" to="." method="_on_HelpPopup_popup_hide"]
+[connection signal="about_to_show" from="PopupParent/HelpPopup" to="." method="_on_Popup_about_to_show"]
+[connection signal="popup_hide" from="PopupParent/HelpPopup" to="." method="_on_Popup_popup_hide"]
