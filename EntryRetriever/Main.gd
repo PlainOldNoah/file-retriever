@@ -112,15 +112,24 @@ func run_program_start():
 func warning(size:int) -> bool:
 	var dangerousSize:int = 0
 	
+	#Tests show that None and Date remain inexpensive and quick to use
+	#Line and full remain shorter on a blank input and get more expensive the more keys are used
+	
 	match printOption:
 		printOptions.FULL:
-			dangerousSize = 500000
+			if searchKeyArray.size() == 0:
+				dangerousSize = 300000
+			else:
+				dangerousSize = 100000
 		printOptions.MATCHEDLINE:
-			dangerousSize = 1000000
+			if searchKeyArray.size() == 0:
+				dangerousSize = 30000000
+			else:
+				dangerousSize = 10000000
 		printOptions.DATE:
-			dangerousSize = 15000000
+			dangerousSize = 11000000
 		printOptions.NONE:
-			dangerousSize = 35000000
+			dangerousSize = 60000000
 	
 	if size > dangerousSize:
 		WarningPopup.popup_centered()
@@ -429,12 +438,27 @@ func progress_update() -> int:
 
 #Makes sure the fileInputBox and fileDialog are in sync
 func set_selection_input():
+	#Get the number of directories and files from the input buffer
+	var txtInCount: int = 0
+	var dirInCount: int = 0
+	
+	for i in inputPath.size():
+		if ".txt" in inputPath[i]:
+			txtInCount += 1
+		else:
+			dirInCount += 1
+	
+	#Set the input bar to show meaningful information based on what is to be searched though
 	if inputPath.size() == 1:
 		SelectionInput.text = inputPath[0]
-		InputFileDialog.current_path = inputPath[0]
 	else:
-		SelectionInput.text = "Multiple Files/Directories"
-		InputFileDialog.current_path = inputPath[inputPath.size() - 1]
+		SelectionInput.text = str(dirInCount) + " Dirs, " + str(txtInCount) + " Files: "
+		
+		for i in inputPath.size():
+			SelectionInput.text += inputPath[i].right(inputPath[i].rfindn("/", -1) + 1) + ", "
+	
+	InputFileDialog.current_dir = inputPath[inputPath.size() - 1]
+	InputFileDialog.current_path = inputPath[inputPath.size() - 1]
 
 #Resets output/search data
 func reset_statistics():
