@@ -17,7 +17,7 @@ var endOfFilePos:int = -1     #f.seek_end(0)
 #Search key arrays for searching and printing
 var searchKeyArray : PoolStringArray = [] #Holds the comma seperated search terms
 var operationArray : PoolStringArray = [] #Stores the operation of each search term
-var allTermsArray : PoolStringArray = [] #Stores every term, used in printing to output
+var allTermsArray  : PoolStringArray = [] #Stores every term, used in printing to output
 
 #Misc variables
 var estimatedTotalDays: int = 0
@@ -368,9 +368,43 @@ func print_to_output(f:File):
 
 #Converts the user input to a poolStringArray
 func parse_search_keys():
-	searchKeyArray = SearchKeyInput.text.split(",", false, 0)
+	var quoted:bool = false
+	var tempString:String = ""
+	var tempPoolStringArray:PoolStringArray = []
+	var tempInputString:String = SearchKeyInput.text
+	
+	searchKeyArray.resize(0)
+	assert(searchKeyArray.size() == 0)
+	
+	#Get quoted substrings and parse them into the search array
+	for c in SearchKeyInput.text:
+		if quoted:
+			if c == '"':
+				quoted = false
+				tempString += c
+				if not '""' in tempString:  #Prevent empty strings from being sent to the array
+					searchKeyArray.append(tempString)
+					tempInputString = tempInputString.replace(tempString, "")
+			else:
+				tempString += c
+		else:
+			if c == '"':
+				tempString = ""
+				tempString += c
+				quoted = true
+	
+	tempInputString = tempInputString.replace('"', "")
+	
+	#Split by comma, main feature of this function
+	tempPoolStringArray = tempInputString.split(",", false, 0)
+	for i in tempPoolStringArray.size():
+		if tempPoolStringArray[i].strip_edges() != "":
+			searchKeyArray.append(tempPoolStringArray[i])
+	
+	#Removes random whitespace from search keys
 	for i in searchKeyArray.size():
 		searchKeyArray[i] = searchKeyArray[i].strip_edges()
+
 
 #Creates the matching operationArray to the searchKeyArray
 func prepare_search_terms():
@@ -381,7 +415,10 @@ func prepare_search_terms():
 	
 	#Passes in the operation of each term from the searchKeyArray into the operationArray
 	for i in searchKeyArray.size():
-		if "-" in searchKeyArray[i]:# or "NOT " in searchKeyArray[i].to_lower():
+		if '"' in searchKeyArray[i]:
+			operationArray[i] = "AND"
+			searchKeyArray[i] = searchKeyArray[i].replace('"', "")
+		elif "-" in searchKeyArray[i]:
 			operationArray[i] = "NOT"
 			searchKeyArray[i] = searchKeyArray[i].replace("-", "")
 		elif " or " in searchKeyArray[i].to_lower():
@@ -392,9 +429,18 @@ func prepare_search_terms():
 	sort_search_keys()
 	
 	#Generates the allTermsArray used in output printing
-	var tempString:String = SearchKeyInput.text.replace(" or ", ",")
-	tempString = tempString.replace(" ", "")
-	allTermsArray = tempString.split(",", false)
+	#allTermsArray splits OR into it's own thing
+	allTermsArray.resize(0)
+	for i in searchKeyArray.size():
+		if operationArray[i] == "OR":
+			var tempArr:PoolStringArray = searchKeyArray[i].split("or", false)
+			allTermsArray.append_array(tempArr)
+		else:
+			allTermsArray.append(searchKeyArray[i])
+	
+	#Cleans up the array
+	for j in allTermsArray.size():
+		allTermsArray[j] = allTermsArray[j].strip_edges()
 
 #Sorts the arrays to be NOT, AND, then OR
 func sort_search_keys():
@@ -568,14 +614,17 @@ func _on_FromOutput_toggled(button_pressed):
 
 
 func _on_RandomDate_pressed():
-	SearchKeyInput.text = generate_rand_date()
+	if Input.is_key_pressed(KEY_SHIFT) and not SearchKeyInput.text.empty():
+		SearchKeyInput.text += " or " + generate_rand_date()
+	else:
+		SearchKeyInput.text = generate_rand_date()
 	parse_search_keys()
 
 #Gets the current date and puts it into the search key input
 func _on_TodaysDate_pressed():
 	var date = OS.get_date()
 	var searchDate = str(date.month) + "/" + str(date.day) + "/"
-	SearchKeyInput.text = searchDate
+	SearchKeyInput.text = searchDate + ", " +'", "' + ", " + "day"
 	
 	#If shift is held down, add exclusion dates which narrow results and increase seach time
 	if Input.is_key_pressed(KEY_SHIFT):
