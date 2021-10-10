@@ -5,7 +5,13 @@ const inputFolderFormat = "Logs - *"
 const inputFileFormat = "(??) * - *"
 const entryHeaderFormat = "*/*/*, *day"
 const startingDate = {"year":2017, "month":1, "day":1,}
-const defaultFilePath = "/Users/Noah/Library/Entires/"
+
+#Files and directories stored here for later searching
+var inputPath:PoolStringArray = []
+
+#Search Terms and their meta data
+var termDict:Dictionary = {} #Stores search terms and meta data. Term, Operation, Group, Status
+const dictTemplate:Dictionary = {"Term": null, "Operation": null, "Group": null, "Status": false}
 
 #Variables for file/entry searching and printing
 var currentHeaderText:String = ""
@@ -14,31 +20,24 @@ var currentHeaderPos:int = -1 #f.position of beginning of current header
 var nextHeaderPos:int = -1    #f.position of the next header OR f.seek_end(0) position
 var endOfFilePos:int = -1     #f.seek_end(0)
 
-#Search key arrays for searching and printing
-var searchKeyArray : PoolStringArray = [] #Holds the comma seperated search terms
-var operationArray : PoolStringArray = [] #Stores the operation of each search term
-var allTermsArray  : PoolStringArray = [] #Stores every term, used in printing to output
+enum printOptions {FULL, DATE, MATCHEDLINE, NONE}
+export (printOptions) var printOption = printOptions.NONE
 
 #Misc variables
 var estimatedTotalDays: int = 0
 var currentFileSize:int = 0 #Total bytes to scan though
 var totalFileSize:int = 0   #Bytes scanned during read
 
-var inputPath:PoolStringArray = [] #Files and directorys stored here for later searching
-
-enum printOptions {FULL, DATE, MATCHEDLINE, NONE}
-export (printOptions) var printOption = printOptions.NONE
-
 var rng = RandomNumberGenerator.new()
 
 #---------------------------- NODES
+onready var BackgroundBlur =    $ScreenEffects/ColorRect
 onready var PopupParent =       $PopupParent
 onready var HelpPopup =         $PopupParent/HelpPopup
 onready var InputFileDialog =   $PopupParent/InputFileDialog
 onready var OutputFileConfirm = $PopupParent/OutputFileConfirmation
 onready var OutputFileName =    OutputFileConfirm.get_node("LineEdit")
 onready var WarningPopup =      $PopupParent/WarningPopup
-onready var WarningConfirm =    WarningPopup.get_node("HBoxContainer/WarningConfim")
 onready var WarningAbort =      WarningPopup.get_node("HBoxContainer/WarningAbort")
 
 onready var OutputWindow =      $MarginContainer/HBoxContainer/OutputWindow
@@ -82,8 +81,7 @@ func _unhandled_input(event):
 func run_program_start():
 	#Initializing
 	reset_statistics()
-	parse_search_keys()
-	prepare_search_terms()
+	fillTermDict(parse_search_keys(SearchKeyInput.text)) #String -> PoolStringArray -> Dictionary
 	set_selection_input() #Even if fileInput is cleared, there are still directorys saved
 	
 	store_keyword_history()
@@ -113,15 +111,14 @@ func warning(size:int) -> bool:
 	
 	#Tests show that None and Date remain inexpensive and quick to use
 	#Line and full remain shorter on a blank input and get more expensive the more keys are used
-	
 	match printOption:
 		printOptions.FULL:
-			if searchKeyArray.size() == 0:
+			if termDict.size() == 0:
 				dangerousSize = 300000
 			else:
 				dangerousSize = 100000
 		printOptions.MATCHEDLINE:
-			if searchKeyArray.size() == 0:
+			if termDict.size() == 0:
 				dangerousSize = 30000000
 			else:
 				dangerousSize = 10000000
@@ -246,40 +243,32 @@ func initialize_file_scan(f:File):
 #RETURN: a bool based on the evaluation of the terms (Are all search terms true)
 func search_entry(f:File) -> bool:
 	EntryCountOutput.text = str(int(EntryCountOutput.text) + 1)
-	
 	var nextHeaderFound = false
 	
-	#Create an array to store whether or not a match has been found
-	var storedMatches:Array = []
-	for i in operationArray.size():
-		if operationArray[i] == "NOT":
-			storedMatches.append(true)
-		else:
-			storedMatches.append(false)
+	resetTermDictStatus(termDict)
 	
 	f.seek(currentHeaderPos)
 	set_line(f.get_line())
 	
-	#For every line check every term
 	while nextHeaderFound == false:
 		
-		for i in operationArray.size():
-			if storedMatches[i] != true or operationArray[i] == "NOT": #Shortcircut if term has already been met
-				match operationArray[i]:
+		for i in termDict.size():
+			if termDict[i]["Status"] == false or termDict[i]["Operation"] == "NOT": #Shortcircut if term has already been met
+				match termDict[i]["Operation"]:
 					"NOT":
-						if find_match(line, searchKeyArray[i]):
-							storedMatches[i] = false
+						if find_match(line, termDict[i]["Term"]):
+							termDict[i]["Status"] = false
 							return false
 					"AND":
-						if find_match(line, searchKeyArray[i]):
-							storedMatches[i] = true
+						if find_match(line, termDict[i]["Term"]):
+							termDict[i]["Status"] = true
 					"OR":
-						var tempOrArray:Array = Array(searchKeyArray[i].split(" or ", true, 0))
-						for j in tempOrArray.size():
-							if find_match(line, tempOrArray[j]) and storedMatches[i] == false:
-								storedMatches[i] = true
-					_:
-						print_debug("ERROR: Invalid Operation in operationArray")
+						if find_match(line, termDict[i]["Term"]):
+							for j in termDict.size():
+								if termDict[j]["Group"] == termDict[i]["Group"]:
+									termDict[j]["Status"] = true
+					_:		
+						print_debug("ERROR: Invalid Operation")
 		
 		if f.eof_reached():
 			nextHeaderFound = true
@@ -291,8 +280,8 @@ func search_entry(f:File) -> bool:
 			nextHeaderFound = true
 	
 	#Depending on if all terms have been met output a boolean
-	for i in storedMatches.size():
-		if storedMatches[i] != true:
+	for i in termDict.size():
+		if termDict[i]["Status"] == false:
 			return false
 	return true
 
@@ -335,10 +324,16 @@ func print_to_output(f:File):
 		
 		match get_print_option():
 			0: #Full
-				for i in allTermsArray.size():
-					if find_match(line, allTermsArray[i]):
-						#TODO: Depending on operator change color
-						line = "[color=lime]" + line + "[/color]"
+				for i in termDict.size():
+					if find_match(line, termDict[i]["Term"]):
+						#Different colors for different operations
+						match termDict[i]["Operation"]:
+							"OR":
+								line = "[color=yellow]" + line + "[/color]"
+							"PRINT":
+								line = "[color=#18D6D0]" + line + "[/color]"
+							_:
+								line = "[color=#53DC11]" + line + "[/color]"
 				OutputTextBox.bbcode_text += line + "\n"
 				
 				#This adds a blank line between files if there wasn't one
@@ -351,13 +346,13 @@ func print_to_output(f:File):
 					return
 				
 			2: #Matched Line
-				for i in allTermsArray.size():
+				for i in termDict.size():
 					if line.matchn(entryHeaderFormat):
 						if not OutputTextBox.text.empty():
 							line = "\n" + line
 						OutputTextBox.bbcode_text += line + "\n"
 						break
-					elif find_match(line, allTermsArray[i]):
+					elif find_match(line, termDict[i]["Term"]):
 						OutputTextBox.bbcode_text += line + "\n"
 						break
 				
@@ -367,24 +362,24 @@ func print_to_output(f:File):
 #---------------------------- SEACH TERM FUNCS
 
 #Converts the user input to a poolStringArray
-func parse_search_keys():
+func parse_search_keys(inputString:String) -> PoolStringArray:
 	var quoted:bool = false
 	var tempString:String = ""
+	var searchKeyArray : PoolStringArray = []
 	var tempPoolStringArray:PoolStringArray = []
-	var tempInputString:String = SearchKeyInput.text
 	
 	searchKeyArray.resize(0)
 	assert(searchKeyArray.size() == 0)
 	
 	#Get quoted substrings and parse them into the search array
-	for c in SearchKeyInput.text:
+	for c in inputString:
 		if quoted:
 			if c == '"':
 				quoted = false
 				tempString += c
 				if not '""' in tempString:  #Prevent empty strings from being sent to the array
 					searchKeyArray.append(tempString)
-					tempInputString = tempInputString.replace(tempString, "")
+					inputString = inputString.replace(tempString, "")
 			else:
 				tempString += c
 		else:
@@ -393,10 +388,10 @@ func parse_search_keys():
 				tempString += c
 				quoted = true
 	
-	tempInputString = tempInputString.replace('"', "")
+	inputString = inputString.replace('"', "")
 	
 	#Split by comma, main feature of this function
-	tempPoolStringArray = tempInputString.split(",", false, 0)
+	tempPoolStringArray = inputString.split(",", false, 0)
 	for i in tempPoolStringArray.size():
 		if tempPoolStringArray[i].strip_edges() != "":
 			searchKeyArray.append(tempPoolStringArray[i])
@@ -404,66 +399,91 @@ func parse_search_keys():
 	#Removes random whitespace from search keys
 	for i in searchKeyArray.size():
 		searchKeyArray[i] = searchKeyArray[i].strip_edges()
+	
+	return searchKeyArray
 
-
-#Creates the matching operationArray to the searchKeyArray
-func prepare_search_terms():
-	#Clears the operationArray and corrects its size
-	operationArray.resize(searchKeyArray.size())
-	for j in operationArray.size():
-		operationArray[j] = ""
-	
-	#Passes in the operation of each term from the searchKeyArray into the operationArray
-	for i in searchKeyArray.size():
-		if '"' in searchKeyArray[i]:
-			operationArray[i] = "AND"
-			searchKeyArray[i] = searchKeyArray[i].replace('"', "")
-		elif "-" in searchKeyArray[i]:
-			operationArray[i] = "NOT"
-			searchKeyArray[i] = searchKeyArray[i].replace("-", "")
-		elif " or " in searchKeyArray[i].to_lower():
-			operationArray[i] = "OR"
-		else:
-			operationArray[i] = "AND"
-	
-	sort_search_keys()
-	
-	#Generates the allTermsArray used in output printing
-	#allTermsArray splits OR into it's own thing
-	allTermsArray.resize(0)
-	for i in searchKeyArray.size():
-		if operationArray[i] == "OR":
-			var tempArr:PoolStringArray = searchKeyArray[i].split("or", false)
-			allTermsArray.append_array(tempArr)
-		else:
-			allTermsArray.append(searchKeyArray[i])
-	
-	#Cleans up the array
-	for j in allTermsArray.size():
-		allTermsArray[j] = allTermsArray[j].strip_edges()
-
-#Sorts the arrays to be NOT, AND, then OR
-func sort_search_keys():
-	var tempSearchKeyArray:PoolStringArray = []
-	var tempOperationArray:PoolStringArray = []
+#Takes in a PoolStringArray and splits it apart and fills in the TermDictionary
+#Handles Term, Operation, Group. Status is defaulted to false
+func fillTermDict(PSA:PoolStringArray):
+	var tdNextIndex:int = 0 #What index should the next sub-directory be added in at
+	var currGroup:int = 0   #Used for keeping OR statements linked together
+	termDict.clear()
+	for i in PSA.size(): 
 		
-	for k in searchKeyArray.size():
-		if "NOT" in operationArray[k]:
-			tempSearchKeyArray.append(searchKeyArray[k])
-			tempOperationArray.append(operationArray[k])
-			
-	for k in searchKeyArray.size():
-		if "AND" in operationArray[k]:
-			tempSearchKeyArray.append(searchKeyArray[k])
-			tempOperationArray.append(operationArray[k])
-			
-	for k in searchKeyArray.size():
-		if "OR" in operationArray[k]:
-			tempSearchKeyArray.append(searchKeyArray[k])
-			tempOperationArray.append(operationArray[k])
+		#Depending on term fill in correct info
+		#Most terms require a new spot in the dir and can be filled in from there
+		#OR terms require special splitting
+		
+		if '"' in PSA[i]: #Quoted
+			termDict[tdNextIndex] = dictTemplate.duplicate()
+			termDict[tdNextIndex]["Term"] = PSA[i].strip_edges()
+			termDict[tdNextIndex]["Operation"] = "AND"
+			termDict[tdNextIndex]["Term"] = PSA[i].replace('"', "")
+			termDict[tdNextIndex]["Group"] = currGroup
+		elif "-" in PSA[i]: #NOT
+			termDict[tdNextIndex] = dictTemplate.duplicate()
+			termDict[tdNextIndex]["Term"] = PSA[i].strip_edges()
+			termDict[tdNextIndex]["Operation"] = "NOT"
+			termDict[tdNextIndex]["Term"] = PSA[i].replace("-", "")
+			termDict[tdNextIndex]["Group"] = currGroup
+		elif "+" in PSA[i]: #PRINTOUT
+			termDict[tdNextIndex] = dictTemplate.duplicate()
+			termDict[tdNextIndex]["Term"] = PSA[i].strip_edges()
+			termDict[tdNextIndex]["Operation"] = "PRINT"
+			termDict[tdNextIndex]["Term"] = PSA[i].replace("+", "")
+			termDict[tdNextIndex]["Group"] = currGroup
+		elif " or " in PSA[i].to_lower(): #OR
+			var tempPSA:PoolStringArray = PSA[i].split("or", false)
+			for j in tempPSA.size():
+				termDict[tdNextIndex] = dictTemplate.duplicate()
+				termDict[tdNextIndex]["Term"] = tempPSA[j].strip_edges()
+				termDict[tdNextIndex]["Group"] = currGroup
+				termDict[tdNextIndex]["Operation"] = "OR"
+				tdNextIndex += 1
+			tdNextIndex -= 1 #Undo extra increment
+		else: #DEFAULT/AND
+			termDict[tdNextIndex] = dictTemplate.duplicate()
+			termDict[tdNextIndex]["Term"] = PSA[i].strip_edges()
+			termDict[tdNextIndex]["Operation"] = "AND"
+			termDict[tdNextIndex]["Group"] = currGroup
+		
+		tdNextIndex += 1
+		currGroup += 1
 	
-	searchKeyArray = tempSearchKeyArray
-	operationArray = tempOperationArray
+	termDict = sortDictionary(termDict)
+
+#Takes in a dictionary, returns a sorted dictionary
+#Order goes: NOT > AND > OR > PRINT
+func sortDictionary(dict:Dictionary) -> Dictionary:
+	var sortedDict:Dictionary = {}
+	var nextIndex:int = 0
+	
+	for k in dict.size():
+		if dict[k]["Operation"] == "NOT":
+			sortedDict[nextIndex] = dict[k]
+			nextIndex += 1
+	for k in dict.size():
+		if dict[k]["Operation"] == "AND":
+			sortedDict[nextIndex] = dict[k]
+			nextIndex += 1
+	for k in dict.size():
+		if dict[k]["Operation"] == "OR":
+			sortedDict[nextIndex] = dict[k]
+			nextIndex += 1
+	for k in dict.size():
+		if dict[k]["Operation"] == "PRINT":
+			sortedDict[nextIndex] = dict[k]
+			nextIndex += 1
+		
+	return sortedDict
+
+#Sets Status of all terms to false unless term is NOT
+func resetTermDictStatus(dict:Dictionary):
+	for i in dict.size():
+		if dict[i]["Operation"] == "NOT" or dict[i]["Operation"] == "PRINT":
+			termDict[i]["Status"] = true
+		else:
+			termDict[i]["Status"] = false
 
 #---------------------------- MISC FUNCS
 #Summation of all files that need to be searched though
@@ -503,8 +523,8 @@ func set_selection_input():
 		for i in inputPath.size():
 			SelectionInput.text += inputPath[i].right(inputPath[i].rfindn("/", -1) + 1) + ", "
 	
-	InputFileDialog.current_dir = inputPath[inputPath.size() - 1]
-	InputFileDialog.current_path = inputPath[inputPath.size() - 1]
+	InputFileDialog.current_dir = inputPath[inputPath.size() - 1] + "/"
+	InputFileDialog.current_path = inputPath[inputPath.size() - 1] + "/"
 
 #Converts inputPath PoolStringArray into an array to sort and then convert it back
 func sort_selection_input():
@@ -609,16 +629,11 @@ func _on_InputFileDialog_files_selected(paths):
 	set_selection_input()
 
 
-func _on_FromOutput_toggled(button_pressed):
-		print("Not Connected")
-
-
 func _on_RandomDate_pressed():
 	if Input.is_key_pressed(KEY_SHIFT) and not SearchKeyInput.text.empty():
 		SearchKeyInput.text += " or " + generate_rand_date()
 	else:
 		SearchKeyInput.text = generate_rand_date()
-	parse_search_keys()
 
 #Gets the current date and puts it into the search key input
 func _on_TodaysDate_pressed():
@@ -626,15 +641,11 @@ func _on_TodaysDate_pressed():
 	var searchDate = str(date.month) + "/" + str(date.day) + "/"
 	SearchKeyInput.text = searchDate + ", " +'", "' + ", " + "day"
 	
-	#If shift is held down, add exclusion dates which narrow results and increase seach time
-	if Input.is_key_pressed(KEY_SHIFT):
-		for i in (date.year - startingDate.year + 1):
-			var year = str(startingDate.year + i)
-			
-			SearchKeyInput.text += ", "
-			SearchKeyInput.text += "-" + str(date.month) + "/" + str(date.day) + "/" + year
-			
-	parse_search_keys()
+	#Extra security needed for month 1 and 2
+	if date.month == 1:
+		SearchKeyInput.text += ", -11/"
+	elif date.month == 2:
+		SearchKeyInput.text += ", -12/"
 
 
 #Buttons for controlling what to send to output window
@@ -710,7 +721,8 @@ func _on_Quit_pressed():
 
 #Universal signal to handle popup background darken effect
 func _on_Popup_about_to_show():
-	$ScreenEffects/ColorRect.color = Color(0, 0, 0, 0.5)
+	BackgroundBlur.visible = true
+	BackgroundBlur.color = Color(0, 0, 0, 0.5)
 
 func _on_Popup_popup_hide():
-	$ScreenEffects/ColorRect.color = Color(0, 0, 0, 0)
+	BackgroundBlur.color = Color(0, 0, 0, 0)

@@ -57,7 +57,7 @@ __meta__ = {
 margin_right = 400.0
 margin_bottom = 14.0
 size_flags_vertical = 1
-text = "  Entry Retriever (v.2.0.0)"
+text = "  Entry Retriever (v.3.0.0)"
 valign = 1
 
 [node name="FileSelection" type="VBoxContainer" parent="MarginContainer/HBoxContainer/GUI"]
@@ -71,7 +71,7 @@ custom_constants/separation = 10
 margin_right = 400.0
 margin_bottom = 30.0
 rect_min_size = Vector2( 400, 30 )
-text = "C:/Users/Noah/Library/Entires/EntrieverTestFiles"
+text = "C:/Users/Noah/Library/Entires/"
 placeholder_text = "Select a File or Directory to Scan Though"
 caret_blink = true
 caret_blink_speed = 0.5
@@ -394,6 +394,30 @@ size_flags_vertical = 1
 text = "0"
 valign = 1
 
+[node name="History" type="PanelContainer" parent="MarginContainer/HBoxContainer/GUI/TabContainer"]
+visible = false
+self_modulate = Color( 0.721569, 0.721569, 0.721569, 1 )
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_left = 4.0
+margin_top = 32.0
+margin_right = -4.0
+margin_bottom = -4.0
+size_flags_vertical = 3
+__meta__ = {
+"_editor_description_": ""
+}
+
+[node name="TextEdit" type="TextEdit" parent="MarginContainer/HBoxContainer/GUI/TabContainer/History"]
+margin_left = 7.0
+margin_top = 7.0
+margin_right = 385.0
+margin_bottom = 157.0
+rect_min_size = Vector2( 0, 150 )
+readonly = true
+show_line_numbers = true
+context_menu_enabled = false
+
 [node name="Export" type="VBoxContainer" parent="MarginContainer/HBoxContainer/GUI/TabContainer"]
 visible = false
 anchor_right = 1.0
@@ -440,30 +464,6 @@ margin_right = 392.0
 margin_bottom = 64.0
 rect_min_size = Vector2( 0, 30 )
 text = "Export to Output File"
-
-[node name="History" type="PanelContainer" parent="MarginContainer/HBoxContainer/GUI/TabContainer"]
-visible = false
-self_modulate = Color( 0.721569, 0.721569, 0.721569, 1 )
-anchor_right = 1.0
-anchor_bottom = 1.0
-margin_left = 4.0
-margin_top = 32.0
-margin_right = -4.0
-margin_bottom = -4.0
-size_flags_vertical = 3
-__meta__ = {
-"_editor_description_": ""
-}
-
-[node name="TextEdit" type="TextEdit" parent="MarginContainer/HBoxContainer/GUI/TabContainer/History"]
-margin_left = 7.0
-margin_top = 7.0
-margin_right = 385.0
-margin_bottom = 157.0
-rect_min_size = Vector2( 0, 150 )
-readonly = true
-show_line_numbers = true
-context_menu_enabled = false
 
 [node name="LowerControl" type="VBoxContainer" parent="MarginContainer/HBoxContainer/GUI"]
 margin_top = 626.0
@@ -680,86 +680,93 @@ self_modulate = Color( 0.721569, 0.721569, 0.721569, 1 )
 margin_left = 8.0
 margin_top = 8.0
 margin_right = 592.0
-margin_bottom = 22.0
+margin_bottom = 634.0
 
 [node name="RichTextLabel" type="RichTextLabel" parent="PopupParent/HelpPopup/PanelContainer"]
 margin_left = 7.0
 margin_top = 7.0
 margin_right = 577.0
-margin_bottom = 551.0
+margin_bottom = 619.0
 custom_constants/line_separation = 3
 bbcode_enabled = true
 bbcode_text = "[u]Input Selection[/u]
-[Select File] - Opens a file dialog to select 1 file or directory
-[Select Files] - Opens a file dialog to select multiple files (not directories)
-[From Output] - Run the search on the current text in the output instead of a file
+[Select Folder] - Opens up file dialog to select a directory*
+[Select File(s)] - Opens up file dialog to select file(s)*
+*Hold SHIFT when selecting to append new inputs to previous inputs
 
-[u]Search Keywords[/u]
->Operators
-	- ( , ) is used to seperate terms and acts as an AND keyword
-	- (OR) is is true if at least one sub-term returns true
-	- ( - ) excludes a term and intantly returns false if the term comes up
->Operator Examples
-	- {a, b, c} = returns true if a, b, and c are all present
-	- {a or b} = returns true if a or b are present
-	- {-a}        = returns true if a is not present
->Buttons
-	[Random Date] - Generates a random date from 1/1/17 to the present
-	[Today's Date] - Inputs today's date into the search key input as \"mm/dd/\"
-	Shift + [Today's Date] - Inputs today's date from each year since 2017
-		(Creates a more narrow search but takes longer to run)
-	[Case Sensitive] - Determines if search keys should be used as-is
+[u]Search Operators[/u]
+( , )    AND representation. Commas seperate terms
+(OR)  Returns TRUE if at least one term is true
+( - )    NOT or Exclusion keyword. Returns FALSE if term is present
+( \"\" )  QUOTED terms are used as-is. Quoted operators act as plain text
+( + )   PRINT keywork. Does not affect seaching. Colors keyword when in output
 
-[u]Running and Output[/u]
->Buttons
-	[Full Entry]   - Prints out the entire entry of retrieved entries
-	[Date Only]  - Prints out only the date of retrieved entries
-	[Line Only]   - Prints out the date and matching line of retrieved entries
-	[No Output] - Does not print out anything to output
+[u]Operator Examples[/u]
+1) x, y, z = x AND y AND z must be included to be TRUE
+2) x or y or z = At least 1 of x, y, or z much be included
+3) -x = Will only return TRUE if x is NOT included
+4) \"x or y or z\" = Only acts as one term and must be included as-is
+5) x, +y = Will only seach for x. If y is present it will be marked in the output
 
-	[Reset] - Resets search data
-	Shift + [Reset] - Restarts the program
-	[Quit] - Closes the program
-	[Help] - You pressed that to get here"
+[u]Search Term Buttons[/u]
+[Random Date] - Selects a random date from 1/1/2017 up to the present*
+[Today's Date] - Sets today's date into the text box
+[Case Sensitive] - Toggles if case sensitivity matters in searching
+*Hold SHIFT to chain random dates in the text box
+
+[u]Output Options[/u]
+[No Print] - Sends nothing to output window
+[Date Only] - Only sends the date to output window
+[Line Only] - Only sends the date and matching lines to output window
+[Full Entry] - Sends everything to output window
+
+[u]Control Buttons[/u]
+[Reset] - Resets search data*
+[Quit] - Closes the program
+[Help] - You pressed that to get here
+*Hold SHIFT to completely restart the program"
 text = "Input Selection
-[Select File] - Opens a file dialog to select 1 file or directory
-[Select Files] - Opens a file dialog to select multiple files (not directories)
-[From Output] - Run the search on the current text in the output instead of a file
+[Select Folder] - Opens up file dialog to select a directory*
+[Select File(s)] - Opens up file dialog to select file(s)*
+*Hold SHIFT when selecting to append new inputs to previous inputs
 
-Search Keywords
->Operators
-	- ( , ) is used to seperate terms and acts as an AND keyword
-	- (OR) is is true if at least one sub-term returns true
-	- ( - ) excludes a term and intantly returns false if the term comes up
->Operator Examples
-	- {a, b, c} = returns true if a, b, and c are all present
-	- {a or b} = returns true if a or b are present
-	- {-a}        = returns true if a is not present
->Buttons
-	[Random Date] - Generates a random date from 1/1/17 to the present
-	[Today's Date] - Inputs today's date into the search key input as \"mm/dd/\"
-	Shift + [Today's Date] - Inputs today's date from each year since 2017
-		(Creates a more narrow search but takes longer to run)
-	[Case Sensitive] - Determines if search keys should be used as-is
+Search Operators
+( , )    AND representation. Commas seperate terms
+(OR)  Returns TRUE if at least one term is true
+( - )    NOT or Exclusion keyword. Returns FALSE if term is present
+( \"\" )  QUOTED terms are used as-is. Quoted operators act as plain text
+( + )   PRINT keywork. Does not affect seaching. Colors keyword when in output
 
-Running and Output
->Buttons
-	[Full Entry]   - Prints out the entire entry of retrieved entries
-	[Date Only]  - Prints out only the date of retrieved entries
-	[Line Only]   - Prints out the date and matching line of retrieved entries
-	[No Output] - Does not print out anything to output
+Operator Examples
+1) x, y, z = x AND y AND z must be included to be TRUE
+2) x or y or z = At least 1 of x, y, or z much be included
+3) -x = Will only return TRUE if x is NOT included
+4) \"x or y or z\" = Only acts as one term and must be included as-is
+5) x, +y = Will only seach for x. If y is present it will be marked in the output
 
-	[Reset] - Resets search data
-	Shift + [Reset] - Restarts the program
-	[Quit] - Closes the program
-	[Help] - You pressed that to get here"
+Search Term Buttons
+[Random Date] - Selects a random date from 1/1/2017 up to the present*
+[Today's Date] - Sets today's date into the text box
+[Case Sensitive] - Toggles if case sensitivity matters in searching
+*Hold SHIFT to chain random dates in the text box
+
+Output Options
+[No Print] - Sends nothing to output window
+[Date Only] - Only sends the date to output window
+[Line Only] - Only sends the date and matching lines to output window
+[Full Entry] - Sends everything to output window
+
+Control Buttons
+[Reset] - Resets search data*
+[Quit] - Closes the program
+[Help] - You pressed that to get here
+*Hold SHIFT to completely restart the program"
 fit_content_height = true
 __meta__ = {
 "_edit_use_anchors_": false
 }
 [connection signal="pressed" from="MarginContainer/HBoxContainer/GUI/FileSelection/FileSelectButtons/FileSelect" to="." method="_on_DirectorySelect_pressed"]
 [connection signal="pressed" from="MarginContainer/HBoxContainer/GUI/FileSelection/FileSelectButtons/FilesSelect" to="." method="_on_FilesSelect_pressed"]
-[connection signal="toggled" from="MarginContainer/HBoxContainer/GUI/FileSelection/FileSelectButtons/FromOutput" to="." method="_on_FromOutput_toggled"]
 [connection signal="pressed" from="MarginContainer/HBoxContainer/GUI/SearchKey/SearchKeyButtons/RandomDate" to="." method="_on_RandomDate_pressed"]
 [connection signal="pressed" from="MarginContainer/HBoxContainer/GUI/SearchKey/SearchKeyButtons/TodaysDate" to="." method="_on_TodaysDate_pressed"]
 [connection signal="pressed" from="MarginContainer/HBoxContainer/GUI/RunButtons/OutputButtons/PrintNone" to="." method="_on_PrintNone_pressed"]
